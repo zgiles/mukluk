@@ -1,8 +1,8 @@
 package main
 
 import (
-	"time"
-	"github.com/garyburd/redigo/redis"
+//	"time"
+//	"github.com/garyburd/redigo/redis"
 )
 
 func contains(slice []string, item string) bool {
@@ -15,7 +15,7 @@ func contains(slice []string, item string) bool {
     return ok
 }
 
-
+/*
 // from https://godoc.org/github.com/garyburd/redigo/redis#Pool
 func newRedisPool(server, password string) *redis.Pool {
     return &redis.Pool{
@@ -40,3 +40,4 @@ func newRedisPool(server, password string) *redis.Pool {
         },
     }
 }
+*/
