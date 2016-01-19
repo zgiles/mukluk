@@ -9,9 +9,6 @@ import (
 	"github.com/justinas/alice"
 	"github.com/gorilla/context"
 
-// 	_ "github.com/go-sql-driver/mysql"
-//	"database/sql"
-
   "gomukluk/stores/nodes"
   "gomukluk/stores/nodesredis"
   //"gomukluk/stores/nodesmysql"
@@ -31,13 +28,6 @@ func helloHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 }
 */
 
-/*
-type appContext struct {
-  db *sql.DB
-	config *config
-  redispool *redis.Pool
-}
-*/
 
 type appContext struct {
   nodestore nodes.NodeStore
@@ -79,30 +69,6 @@ func main() {
   log.Println("redis: open")
 
 
-
-  /*
-  // DB Stage
-	db, err := sql.Open("mysql", config.Mysqlconfig.Connectstring)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("db open and pinged")
-	defer log.Println("closingdb")
-	defer db.Close()
-  */
-  /*
-  // Redis Stage
-  log.Println("redis pool opening")
-  redispool := newRedisPool(config.Redisconfig.Host, config.Redisconfig.Password) // this is a redispool *redis.Pool
-  log.Println("redis open")
-  defer log.Println("redis closing")
-  defer redispool.Close()
-  */
-
   // make the redis NodeStoreDB
   log.Println("opening redis NodeStoreDB")
   local_nodesredis := nodesredis.NewNodesRedis(redispool)
@@ -132,8 +98,6 @@ func main() {
 
 
 	// app context
-  //db: db,
-	//appC := appContext{ config: config, redispool: redispool }
   appC := appContext{ nodestore: local_nodestore, nodesdiscoveredstore: local_nodesdiscoveredstore }
   log.Println("app ready")
 
