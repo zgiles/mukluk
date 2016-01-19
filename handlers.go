@@ -35,12 +35,12 @@ func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Re
 	/*
 	n := ac.queryGetNodeByField(key, keyvalue)
 	*/
-	n, dberr := ac.redisgetNodesByField(key, keyvalue)
-	if dberr != nil || len(n) == 0 {
+	n, dberr := ac.nodestore.SingleKV(key, keyvalue)
+	if dberr != nil {
 		http.Error(w, "Not Found", http.StatusBadRequest)
 		return
 	}
-	js, marshallerr := json.Marshal(n[0])
+	js, marshallerr := json.Marshal(n)
 	if marshallerr != nil {
 		http.Error(w, marshallerr.Error(), http.StatusInternalServerError)
 		return
@@ -77,7 +77,7 @@ func (ac appContext) httpGetNodesByFieldHandler(w http.ResponseWriter, r *http.R
 	/*
 	nl := ac.queryGetNodesByField(key, keyvalue)
 	*/
-	nl, dberr := ac.redisgetNodesByField(key, keyvalue)
+	nl, dberr := ac.nodestore.MultiKV(key, keyvalue)
 	// should we return an empty array??
 	if dberr != nil || len(nl) == 0 {
 		http.Error(w, "Not Found", http.StatusBadRequest)
@@ -103,15 +103,13 @@ func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, 
 		http.Error(w, "Invalid Field", http.StatusBadRequest)
 		return
 	}
-	/*
-	n := ac.queryGetDiscoveredNodeByField(key, keyvalue)
-	*/
-	n, dberr := ac.redisgetDiscoveredNodesByField(key, keyvalue)
-	if dberr != nil || len(n) == 0 {
+	// n := ac.queryGetDiscoveredNodeByField(key, keyvalue)
+	n, dberr := ac.nodesdiscoveredstore.SingleKV(key, keyvalue)
+	if dberr != nil {
 		http.Error(w, "Not Found", http.StatusBadRequest)
 		return
 	}
-	js, marshallerr := json.Marshal(n[0])
+	js, marshallerr := json.Marshal(n)
 	if marshallerr != nil {
 		http.Error(w, marshallerr.Error(), http.StatusInternalServerError)
 		return
@@ -125,17 +123,13 @@ func (ac appContext) httpGetDiscoveredNodesByFieldHandler(w http.ResponseWriter,
 	// validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress" }
 	key := ps.ByName("nodekey")
 	keyvalue := ps.ByName("nodekeyvalue")
-	/*
-	keyisvalid := contains(validfields, key)
-	if keyisvalid != true {
-		http.Error(w, "Invalid Field", http.StatusBadRequest)
-		return
-	}
-	*/
-	/*
-	nl := ac.queryGetDiscoveredNodesByField(key, keyvalue)
-	*/
-	nl, dberr := ac.redisgetDiscoveredNodesByField(key, keyvalue)
+	// keyisvalid := contains(validfields, key)
+	// if keyisvalid != true {
+	// 	http.Error(w, "Invalid Field", http.StatusBadRequest)
+	// 	return
+	// }
+	// nl := ac.queryGetDiscoveredNodesByField(key, keyvalue)
+	nl, dberr := ac.nodesdiscoveredstore.MultiKV(key, keyvalue)
 	if dberr != nil || len(nl) == 0 {
 		http.Error(w, "Not Found", http.StatusBadRequest)
 		return

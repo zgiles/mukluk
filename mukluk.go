@@ -9,11 +9,13 @@ import (
 	"github.com/justinas/alice"
 	"github.com/gorilla/context"
 
-	_ "github.com/go-sql-driver/mysql"
-	"database/sql"
+// 	_ "github.com/go-sql-driver/mysql"
+//	"database/sql"
 
-  "github.com/garyburd/redigo/redis"
-
+  "gomukluk/stores/nodes"
+  "gomukluk/stores/nodesredis"
+  "gomukluk/stores/nodesdiscovered"
+  "gomukluk/stores/nodesdiscoveredredis"
 )
 
 
@@ -27,10 +29,17 @@ func helloHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 }
 */
 
+/*
 type appContext struct {
   db *sql.DB
 	config *config
   redispool *redis.Pool
+}
+*/
+
+type appContext struct {
+  nodestore nodes.NodeStore
+  nodesdiscoveredstore nodesdiscovered.NodesDiscoveredStore
 }
 
 func main() {
@@ -65,9 +74,29 @@ func main() {
   defer log.Println("redis closing")
   defer redispool.Close()
 
+
+  // make the redis NodeStoreDB
+  log.Println("opening redis NodeStoreDB")
+  local_nodesredis := nodesredis.NewNodesRedis(redispool)
+
+  // make the redis NodeStore from all the NodeStoreDBs
+  log.Println("opening NodeStore")
+  local_nodestore := nodes.NewNodeStore(local_nodesredis)
+
+
+  // make the redis NodeDiscoveredStoreDB
+  log.Println("opening redis NodeDiscoveredStoreDB")
+  local_nodesdiscoveredredis := nodesdiscoveredredis.NewNodesDiscoveredRedis(redispool)
+
+  // make the redis NodesDiscoveredStore from all the NodesDiscoveredStoreDB's
+  log.Println("opening NodesDiscoveredStore")
+  local_nodesdiscoveredstore := nodesdiscovered.NewNodesDiscoveredStore(local_nodesdiscoveredredis)
+
+
 	// app context
   //db: db,
-	appC := appContext{ config: config, redispool: redispool }
+	//appC := appContext{ config: config, redispool: redispool }
+  appC := appContext{ nodestore: local_nodestore, nodesdiscoveredstore: local_nodesdiscoveredstore }
   log.Println("app ready")
 
 	// common routes
