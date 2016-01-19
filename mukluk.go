@@ -13,11 +13,11 @@ import (
 //	"database/sql"
 
   "gomukluk/stores/nodes"
-  //"gomukluk/stores/nodesredis"
-  "gomukluk/stores/nodesmysql"
+  "gomukluk/stores/nodesredis"
+  //"gomukluk/stores/nodesmysql"
   "gomukluk/stores/nodesdiscovered"
-  //"gomukluk/stores/nodesdiscoveredredis"
-  "gomukluk/stores/nodesdiscoveredmysql"
+  "gomukluk/stores/nodesdiscoveredredis"
+  //"gomukluk/stores/nodesdiscoveredmysql"
 )
 
 
@@ -57,7 +57,7 @@ func main() {
 		log.Fatal(configerr)
 	}
 
-
+/*
   // MySQL Stage
   log.Println("mysql: opening mysql connection")
   mysqlpool, mysqlerr := mysqlStart(config.Mysqlconfig) // this is a db *sql.DB
@@ -66,8 +66,9 @@ func main() {
   }
   defer mysqlpool.Close()
   log.Println("mysql: open")
+*/
 
-/*
+
   // Redis Stage
   log.Println("redis: opening redis connection")
   redispool, rediserr := redisStart(config.Redisconfig) // this is a // this is a redispool *redis.Pool
@@ -76,7 +77,7 @@ func main() {
   }
   // defer db.Close()
   log.Println("redis: open")
-*/
+
 
 
   /*
@@ -103,31 +104,31 @@ func main() {
   */
 
   // make the redis NodeStoreDB
-  //log.Println("opening redis NodeStoreDB")
-  //local_nodesredis := nodesredis.NewNodesRedis(redispool)
+  log.Println("opening redis NodeStoreDB")
+  local_nodesredis := nodesredis.NewNodesRedis(redispool)
 
   // make the mysql NodeStoreDB
-  log.Println("opening mysql NodeStoreDB")
-  local_nodesmysql := nodesmysql.NewNodesMysql(mysqlpool)
+  //log.Println("opening mysql NodeStoreDB")
+  //local_nodesmysql := nodesmysql.NewNodesMysql(mysqlpool)
 
   // make the redis NodeStore from all the NodeStoreDBs
   log.Println("opening NodeStore")
-  // local_nodestore := nodes.NewNodeStore(local_nodesredis)
-  local_nodestore := nodes.NewNodeStore(local_nodesmysql)
+  local_nodestore := nodes.NewNodeStore(local_nodesredis)
+  // local_nodestore := nodes.NewNodeStore(local_nodesmysql)
 
 
   // make the redis NodeDiscoveredStoreDB
-  //log.Println("opening redis NodeDiscoveredStoreDB")
-  //local_nodesdiscoveredredis := nodesdiscoveredredis.NewNodesDiscoveredRedis(redispool)
+  log.Println("opening redis NodeDiscoveredStoreDB")
+  local_nodesdiscoveredredis := nodesdiscoveredredis.NewNodesDiscoveredRedis(redispool)
 
   // make the mysql NodeDiscoveredStoreDB
-  log.Println("opening mysql NodeDiscoveredStoreDB")
-  local_nodesdiscoveredmysql := nodesdiscoveredmysql.NewNodesDiscoveredMysql(mysqlpool)
+  // log.Println("opening mysql NodeDiscoveredStoreDB")
+  // local_nodesdiscoveredmysql := nodesdiscoveredmysql.NewNodesDiscoveredMysql(mysqlpool)
 
   // make the redis NodesDiscoveredStore from all the NodesDiscoveredStoreDB's
   log.Println("opening NodesDiscoveredStore")
-  // local_nodesdiscoveredstore := nodesdiscovered.NewNodesDiscoveredStore(local_nodesdiscoveredredis)
-  local_nodesdiscoveredstore := nodesdiscovered.NewNodesDiscoveredStore(local_nodesdiscoveredmysql)
+  local_nodesdiscoveredstore := nodesdiscovered.NewNodesDiscoveredStore(local_nodesdiscoveredredis)
+  // local_nodesdiscoveredstore := nodesdiscovered.NewNodesDiscoveredStore(local_nodesdiscoveredmysql)
 
 
 	// app context
