@@ -11,10 +11,11 @@ import (
 
   "gomukluk/stores/nodes"
   "gomukluk/stores/nodesredis"
-  //"gomukluk/stores/nodesmysql"
+  "gomukluk/stores/nodesmysql"
   "gomukluk/stores/nodesdiscovered"
   "gomukluk/stores/nodesdiscoveredredis"
-  //"gomukluk/stores/nodesdiscoveredmysql"
+  "gomukluk/stores/nodesdiscoveredmysql"
+
 )
 
 
@@ -47,58 +48,61 @@ func main() {
 		log.Fatal(configerr)
 	}
 
-/*
-  // MySQL Stage
-  log.Println("mysql: opening mysql connection")
-  mysqlpool, mysqlerr := mysqlStart(config.Mysqlconfig) // this is a db *sql.DB
-  if mysqlerr != nil {
-    log.Fatal(mysqlerr)
+  var nodestoredb nodes.NodeStoreDB
+  var nodestore nodes.NodeStore
+  var nodesdiscoveredstoredb nodesdiscovered.NodesDiscoveredStoreDB
+  var nodesdiscoveredstore nodesdiscovered.NodesDiscoveredStore
+
+  switch config.Serverconfig.Maindb {
+    case "mysql":
+      if config.Mysqlconfig.Enabled == false { log.Fatal("mysql selected, but not enabled") }
+
+      log.Println("mysql: opening mysql connection")
+      mysqlpool, mysqlerr := mysqlStart(config.Mysqlconfig) // this is a db *sql.DB
+      if mysqlerr != nil {
+        log.Fatal(mysqlerr)
+      }
+      defer mysqlpool.Close()
+      log.Println("mysql: open")
+
+      log.Println("mysql: opening NodeStoreDB")
+      nodestoredb = nodesmysql.NewNodesMysql(mysqlpool)
+      log.Println("mysql: opening NodeStore")
+      nodestore = nodes.NewNodeStore(nodestoredb)
+
+      log.Println("mysql: opening NodeDiscoveredStoreDB")
+      nodesdiscoveredstoredb = nodesdiscoveredmysql.NewNodesDiscoveredMysql(mysqlpool)
+      log.Println("mysql: opening NodesDiscoveredStore")
+      nodesdiscoveredstore = nodesdiscovered.NewNodesDiscoveredStore(nodesdiscoveredstoredb)
+
+    case "redis":
+      if config.Redisconfig.Enabled == false { log.Fatal("redis selected, but not enabled") }
+
+      log.Println("redis: opening redis connection")
+      redispool, rediserr := redisStart(config.Redisconfig) // this is a redispool *redis.Pool
+      if rediserr != nil {
+        log.Fatal(rediserr)
+      }
+      // defer db.Close()
+      log.Println("redis: open")
+
+      log.Println("redis: opening NodeStoreDB")
+      nodestoredb = nodesredis.NewNodesRedis(redispool)
+      log.Println("redis: opening NodeStore")
+      nodestore = nodes.NewNodeStore(nodestoredb)
+
+      log.Println("redis: opening NodeDiscoveredStoreDB")
+      nodesdiscoveredstoredb = nodesdiscoveredredis.NewNodesDiscoveredRedis(redispool)
+      log.Println("redis: opening NodesDiscoveredStore")
+      nodesdiscoveredstore = nodesdiscovered.NewNodesDiscoveredStore(nodesdiscoveredstoredb)
+
+    default:
+      log.Fatal("no valid db selected as primary")
+
   }
-  defer mysqlpool.Close()
-  log.Println("mysql: open")
-*/
-
-
-  // Redis Stage
-  log.Println("redis: opening redis connection")
-  redispool, rediserr := redisStart(config.Redisconfig) // this is a // this is a redispool *redis.Pool
-  if rediserr != nil {
-    log.Fatal(rediserr)
-  }
-  // defer db.Close()
-  log.Println("redis: open")
-
-
-  // make the redis NodeStoreDB
-  log.Println("opening redis NodeStoreDB")
-  local_nodesredis := nodesredis.NewNodesRedis(redispool)
-
-  // make the mysql NodeStoreDB
-  //log.Println("opening mysql NodeStoreDB")
-  //local_nodesmysql := nodesmysql.NewNodesMysql(mysqlpool)
-
-  // make the redis NodeStore from all the NodeStoreDBs
-  log.Println("opening NodeStore")
-  local_nodestore := nodes.NewNodeStore(local_nodesredis)
-  // local_nodestore := nodes.NewNodeStore(local_nodesmysql)
-
-
-  // make the redis NodeDiscoveredStoreDB
-  log.Println("opening redis NodeDiscoveredStoreDB")
-  local_nodesdiscoveredredis := nodesdiscoveredredis.NewNodesDiscoveredRedis(redispool)
-
-  // make the mysql NodeDiscoveredStoreDB
-  // log.Println("opening mysql NodeDiscoveredStoreDB")
-  // local_nodesdiscoveredmysql := nodesdiscoveredmysql.NewNodesDiscoveredMysql(mysqlpool)
-
-  // make the redis NodesDiscoveredStore from all the NodesDiscoveredStoreDB's
-  log.Println("opening NodesDiscoveredStore")
-  local_nodesdiscoveredstore := nodesdiscovered.NewNodesDiscoveredStore(local_nodesdiscoveredredis)
-  // local_nodesdiscoveredstore := nodesdiscovered.NewNodesDiscoveredStore(local_nodesdiscoveredmysql)
-
 
 	// app context
-  appC := appContext{ nodestore: local_nodestore, nodesdiscoveredstore: local_nodesdiscoveredstore }
+  appC := appContext{ nodestore: nodestore, nodesdiscoveredstore: nodesdiscoveredstore }
   log.Println("app ready")
 
 	// common routes

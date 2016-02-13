@@ -16,6 +16,7 @@ type redisconfig struct {
 }
 
 type serverconfig struct {
+  Maindb string
   Ip string
   Port int
 }
