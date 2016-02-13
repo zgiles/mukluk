@@ -1,12 +1,30 @@
 package main
 
 import (
-//	"log"
 	"net/http"
 	"encoding/json"
   "github.com/julienschmidt/httprouter"
 )
 
+
+func (ac appContext) jsonresponse(w http.ResponseWriter, js []byte, status int) {
+	w.Header().Set("Content-Type", "application/vnd.api+json")
+	w.WriteHeader(status)
+	w.Write(js)
+}
+
+func (ac appContext) objectmarshaltojsonresponse(w http.ResponseWriter, o interface{}, e []error) {
+	if errorinslice(e) {
+		ac.jsonresponse(w, []byte{}, http.StatusNotFound)
+		return
+	}
+	js, marshallerr := json.Marshal(o)
+	if marshallerr != nil {
+		ac.jsonresponse(w, []byte{}, http.StatusInternalServerError)
+		return
+	}
+	ac.jsonresponse(w, js, http.StatusOK)
+}
 
 // HANDLERS
 
@@ -27,27 +45,11 @@ func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Re
 	validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress" }
 	key := ps.ByName("nodekey")
 	keyvalue := ps.ByName("nodekeyvalue")
-	keyisvalid := contains(validfields, key)
-	if keyisvalid != true {
-		http.Error(w, "Invalid Field", http.StatusBadRequest)
-		return
-	}
-	/*
-	n := ac.queryGetNodeByField(key, keyvalue)
-	*/
-	n, dberr := ac.nodestore.SingleKV(key, keyvalue)
-	if dberr != nil {
-		http.Error(w, "Not Found", http.StatusBadRequest)
-		return
-	}
-	js, marshallerr := json.Marshal(n)
-	if marshallerr != nil {
-		http.Error(w, marshallerr.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/vnd.api+json")
-	w.Write(js)
+	_, keyerr := contains(validfields, key)
+	o, oe := ac.nodestore.SingleKV(key, keyvalue)
+	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
 }
+
 
 // httpGetNodesByFieldHandler
 // Goal: As an HTTP Handler, take a URL via the Request and Params and go lookup the nodes which matches it
@@ -64,32 +66,12 @@ func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Re
 // we call the queryGetNodesByField function with the two fields. Lastly, we marshal the data into a json output via the type Node.
 func (ac appContext) httpGetNodesByFieldHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// TODO verify inputs here
-	// validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress" }
+	validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress", "os_name", "os_step", "node_type", "oob_type" }
 	key := ps.ByName("nodekey")
 	keyvalue := ps.ByName("nodekeyvalue")
-	/*
-	keyisvalid := contains(validfields, key)
-	if keyisvalid != true {
-		http.Error(w, "Invalid Field", http.StatusBadRequest)
-		return
-	}
-	*/
-	/*
-	nl := ac.queryGetNodesByField(key, keyvalue)
-	*/
-	nl, dberr := ac.nodestore.MultiKV(key, keyvalue)
-	// should we return an empty array??
-	if dberr != nil || len(nl) == 0 {
-		http.Error(w, "Not Found", http.StatusBadRequest)
-		return
-	}
-	js, marshallerr := json.Marshal(nl)
-	if marshallerr != nil {
-		http.Error(w, marshallerr.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/vnd.api+json")
-	w.Write(js)
+	_, keyerr := contains(validfields, key)
+	o, oe := ac.nodestore.MultiKV(key, keyvalue)
+	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
 }
 
 
@@ -98,47 +80,18 @@ func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, 
 	validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress" }
 	key := ps.ByName("nodekey")
 	keyvalue := ps.ByName("nodekeyvalue")
-	keyisvalid := contains(validfields, key)
-	if keyisvalid != true {
-		http.Error(w, "Invalid Field", http.StatusBadRequest)
-		return
-	}
-	// n := ac.queryGetDiscoveredNodeByField(key, keyvalue)
-	n, dberr := ac.nodesdiscoveredstore.SingleKV(key, keyvalue)
-	if dberr != nil {
-		http.Error(w, "Not Found", http.StatusBadRequest)
-		return
-	}
-	js, marshallerr := json.Marshal(n)
-	if marshallerr != nil {
-		http.Error(w, marshallerr.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/vnd.api+json")
-	w.Write(js)
+	_, keyerr := contains(validfields, key)
+	o, oe := ac.nodesdiscoveredstore.SingleKV(key, keyvalue)
+	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
 }
+
 
 func (ac appContext) httpGetDiscoveredNodesByFieldHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// TODO verify inputs here
-	// validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress" }
+	validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress", "surpressed", "enrolled" }
 	key := ps.ByName("nodekey")
 	keyvalue := ps.ByName("nodekeyvalue")
-	// keyisvalid := contains(validfields, key)
-	// if keyisvalid != true {
-	// 	http.Error(w, "Invalid Field", http.StatusBadRequest)
-	// 	return
-	// }
-	// nl := ac.queryGetDiscoveredNodesByField(key, keyvalue)
-	nl, dberr := ac.nodesdiscoveredstore.MultiKV(key, keyvalue)
-	if dberr != nil || len(nl) == 0 {
-		http.Error(w, "Not Found", http.StatusBadRequest)
-		return
-	}
-	js, marshallerr := json.Marshal(nl)
-	if marshallerr != nil {
-		http.Error(w, marshallerr.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/vnd.api+json")
-	w.Write(js)
+	_, keyerr := contains(validfields, key)
+	o, oe := ac.nodesdiscoveredstore.MultiKV(key, keyvalue)
+	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
 }
