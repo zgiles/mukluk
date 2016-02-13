@@ -2,8 +2,11 @@ package main
 
 import (
   "fmt"
-	"log"
-	"net/http"
+  "log"
+  "time"
+
+  "gopkg.in/tylerb/graceful.v1"
+  "net/http"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
@@ -36,9 +39,10 @@ type appContext struct {
 }
 
 func main() {
-
   // Closing channel
-  // quitting := make(chan bool)
+  // Currently handled by graceful, but just in case.
+  // quitting := make(chan os.Signal)
+  // signal.Notify(quitting, syscall.SIGINT, syscall.SIGTERM)
 
 	// Options Parse
 
@@ -62,6 +66,7 @@ func main() {
       if mysqlerr != nil {
         log.Fatal(mysqlerr)
       }
+      defer log.Println("mysql: closing")
       defer mysqlpool.Close()
       log.Println("mysql: open")
 
@@ -83,6 +88,7 @@ func main() {
       if rediserr != nil {
         log.Fatal(rediserr)
       }
+      defer log.Println("redis: no close needed...")
       // defer db.Close()
       log.Println("redis: open")
 
@@ -131,6 +137,20 @@ func main() {
 	router.GET("/api/1/ipxe/chain1", xx)
 	*/
 
-	http.ListenAndServe(":8080", router)
+  // graceful.Run(":8080", 10*time.Second, router)
 
+
+  httpsrv := &graceful.Server{
+    Timeout: 10 * time.Second,
+    Server: &http.Server{
+      Addr: ":8080",
+      Handler: router,
+    },
+  }
+  httperr := httpsrv.ListenAndServe()
+  if httperr != nil {
+    log.Fatal(httperr)
+  }
+
+  log.Println("main: end of main")
 }
