@@ -1,11 +1,11 @@
 package main
 
 import (
-	"net/http"
-	"encoding/json"
+  "net/http"
+  "encoding/json"
   "github.com/julienschmidt/httprouter"
+  "github.com/gorilla/context"
 )
-
 
 func (ac appContext) jsonresponse(w http.ResponseWriter, js []byte, status int) {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
@@ -28,6 +28,10 @@ func (ac appContext) objectmarshaltojsonresponse(w http.ResponseWriter, o interf
 
 // HANDLERS
 
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("This is the API URL. Please read the docs (if they exist)."))
+}
+
 // httpGetNodeByFieldHandler
 // Goal: As an HTTP Handler, take a URL via the Request and Params and go lookup the node which matches it
 // additionally, make sure the URL is matching on of the chosen unique field names
@@ -40,11 +44,12 @@ func (ac appContext) objectmarshaltojsonresponse(w http.ResponseWriter, o interf
 // * A not found node will return an empty object. We don't error to the client
 // How: The nodekey is checked against validfields. If it is not contained with in the slice, an error is returned. If it is contained,
 // we call the queryGetNodeByField function with the two fields. Lastly, we marshal the data into a json output via the type Node.
-func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
+	params := context.Get(r, "params").(httprouter.Params)
 	validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress" }
-	key := ps.ByName("nodekey")
-	keyvalue := ps.ByName("nodekeyvalue")
+	key := params.ByName("nodekey")
+	keyvalue := params.ByName("nodekeyvalue")
 	_, keyerr := contains(validfields, key)
 	o, oe := ac.nodestore.SingleKV(key, keyvalue)
 	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
@@ -64,33 +69,36 @@ func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Re
 // * A not found node will return an empty object. We don't error to the client
 // How: The nodekey is checked against validfields. If it is not contained with in the slice, an error is returned. If it is contained,
 // we call the queryGetNodesByField function with the two fields. Lastly, we marshal the data into a json output via the type Node.
-func (ac appContext) httpGetNodesByFieldHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (ac appContext) httpGetNodesByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
+	params := context.Get(r, "params").(httprouter.Params)
 	validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress", "os_name", "os_step", "node_type", "oob_type" }
-	key := ps.ByName("nodekey")
-	keyvalue := ps.ByName("nodekeyvalue")
+	key := params.ByName("nodekey")
+	keyvalue := params.ByName("nodekeyvalue")
 	_, keyerr := contains(validfields, key)
 	o, oe := ac.nodestore.MultiKV(key, keyvalue)
 	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
 }
 
 
-func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
+	params := context.Get(r, "params").(httprouter.Params)
 	validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress" }
-	key := ps.ByName("nodekey")
-	keyvalue := ps.ByName("nodekeyvalue")
+	key := params.ByName("nodekey")
+	keyvalue := params.ByName("nodekeyvalue")
 	_, keyerr := contains(validfields, key)
 	o, oe := ac.nodesdiscoveredstore.SingleKV(key, keyvalue)
 	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
 }
 
 
-func (ac appContext) httpGetDiscoveredNodesByFieldHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (ac appContext) httpGetDiscoveredNodesByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
+	params := context.Get(r, "params").(httprouter.Params)
 	validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress", "surpressed", "enrolled" }
-	key := ps.ByName("nodekey")
-	keyvalue := ps.ByName("nodekeyvalue")
+	key := params.ByName("nodekey")
+	keyvalue := params.ByName("nodekeyvalue")
 	_, keyerr := contains(validfields, key)
 	o, oe := ac.nodesdiscoveredstore.MultiKV(key, keyvalue)
 	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )

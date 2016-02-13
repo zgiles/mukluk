@@ -1,9 +1,9 @@
 package main
 
 import (
-  "fmt"
   "log"
   "time"
+  "strconv"
 
   "gopkg.in/tylerb/graceful.v1"
   "net/http"
@@ -20,18 +20,6 @@ import (
   "gomukluk/stores/nodesdiscoveredmysql"
 
 )
-
-
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Welcome!")
-}
-
-/*
-func helloHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-  fmt.Fprintf(w, "hello, %s!\n", ps.ByName("name"))
-}
-*/
-
 
 type appContext struct {
   nodestore nodes.NodeStore
@@ -117,11 +105,10 @@ func main() {
 	// routers
 	router := httprouter.New()
 	router.GET("/", wrapHandler(commonHandlers.ThenFunc(indexHandler)))
-	// router.GET("/hello/:name", helloHandler)
-	router.GET("/api/1/node/:nodekey/:nodekeyvalue", appC.httpGetNodeByFieldHandler)
-	router.GET("/api/1/nodes/:nodekey/:nodekeyvalue", appC.httpGetNodesByFieldHandler)
-	router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue", appC.httpGetDiscoveredNodeByFieldHandler)
-	router.GET("/api/1/discoverednodes/:nodekey/:nodekeyvalue", appC.httpGetDiscoveredNodesByFieldHandler)
+	router.GET("/api/1/node/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByFieldHandler)))
+	router.GET("/api/1/nodes/:nodekey/:nodekeyvalue",  wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodesByFieldHandler)))
+	router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue",  wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByFieldHandler)))
+	router.GET("/api/1/discoverednodes/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc( appC.httpGetDiscoveredNodesByFieldHandler)))
 
 
   /*
@@ -137,13 +124,11 @@ func main() {
 	router.GET("/api/1/ipxe/chain1", xx)
 	*/
 
-  // graceful.Run(":8080", 10*time.Second, router)
-
 
   httpsrv := &graceful.Server{
-    Timeout: 10 * time.Second,
+    Timeout: time.Duration(config.Serverconfig.Closetimeout) * time.Second,
     Server: &http.Server{
-      Addr: ":8080",
+      Addr: ":" + strconv.FormatInt(config.Serverconfig.Port, 10),
       Handler: router,
     },
   }

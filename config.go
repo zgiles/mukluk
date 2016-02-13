@@ -18,7 +18,8 @@ type redisconfig struct {
 type serverconfig struct {
   Maindb string
   Ip string
-  Port int
+  Port int64
+  Closetimeout int64
 }
 
 type config struct {
