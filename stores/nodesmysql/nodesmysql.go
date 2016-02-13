@@ -44,7 +44,7 @@ func (local nodesmysqldb) queryGetNodeByField(field string, input string) (nodes
 	fn := func(input string) (nodes.Node, error) {
 		n := nodes.Node{}
 		err := local.mysqldb.QueryRow("select uuid, hostname, ipv4address, macaddress, os_name, os_step, node_type, oob_type, heartbeat from nodes where " + field + " = ? limit 1", input).Scan(&n.Uuid, &n.Hostname, &n.Ipv4address, &n.Macaddress, &n.Os_name, &n.Os_step, &n.Node_type, &n.Oob_type, &n.Heartbeat)
-		if err != nil && err != sql.ErrNoRows {
+		if err != nil {
       return n, err
 		}
 		return n, nil
