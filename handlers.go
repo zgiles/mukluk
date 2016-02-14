@@ -13,18 +13,44 @@ func (ac appContext) jsonresponse(w http.ResponseWriter, js []byte, status int) 
 	w.Write(js)
 }
 
+func (ac appContext) textresponse(w http.ResponseWriter, s string, status int) {
+  w.Header().Set("Content-Type", "text/plain")
+  w.WriteHeader(status)
+  w.Write([]byte(s))
+}
+
+func (ac appContext) errorresponse(w http.ResponseWriter, status int) {
+  // w.Header().Set("Content-Type", "application/vnd.api+json")
+  w.WriteHeader(status)
+  w.Write([]byte{})
+}
+
 func (ac appContext) objectmarshaltojsonresponse(w http.ResponseWriter, o interface{}, e []error) {
 	if errorinslice(e) {
-		ac.jsonresponse(w, []byte{}, http.StatusNotFound)
+		ac.errorresponse(w, http.StatusNotFound)
 		return
 	}
 	js, marshallerr := json.Marshal(o)
 	if marshallerr != nil {
-		ac.jsonresponse(w, []byte{}, http.StatusInternalServerError)
+		ac.errorresponse(w, http.StatusInternalServerError)
 		return
 	}
 	ac.jsonresponse(w, js, http.StatusOK)
 }
+
+func (ac appContext) objectandfieldtotextresponse(w http.ResponseWriter, o interface{}, field string, e []error) {
+  if errorinslice(e) {
+		ac.errorresponse(w, http.StatusNotFound)
+		return
+	}
+  m, merr := reflectStructByJSONName(o, field)
+  if merr != nil {
+    ac.errorresponse(w, http.StatusNotFound)
+    return
+  }
+	ac.textresponse(w, m, http.StatusOK)
+}
+
 
 // HANDLERS
 
@@ -50,11 +76,15 @@ func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Re
 	validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress" }
 	key := params.ByName("nodekey")
 	keyvalue := params.ByName("nodekeyvalue")
+  field := params.ByName("field")
 	_, keyerr := contains(validfields, key)
 	o, oe := ac.nodestore.SingleKV(key, keyvalue)
-	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
+  if field == "" {
+    ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
+  } else {
+    ac.objectandfieldtotextresponse(w, o, field, []error{ keyerr, oe } )
+  }
 }
-
 
 // httpGetNodesByFieldHandler
 // Goal: As an HTTP Handler, take a URL via the Request and Params and go lookup the nodes which matches it
@@ -87,9 +117,14 @@ func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, 
 	validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress" }
 	key := params.ByName("nodekey")
 	keyvalue := params.ByName("nodekeyvalue")
+  field := params.ByName("field")
 	_, keyerr := contains(validfields, key)
 	o, oe := ac.nodesdiscoveredstore.SingleKV(key, keyvalue)
-	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
+  if field == "" {
+    ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
+  } else {
+    ac.objectandfieldtotextresponse(w, o, field, []error{ keyerr, oe } )
+  }
 }
 
 

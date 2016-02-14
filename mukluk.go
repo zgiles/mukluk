@@ -106,8 +106,10 @@ func main() {
 	router := httprouter.New()
 	router.GET("/", wrapHandler(commonHandlers.ThenFunc(indexHandler)))
 	router.GET("/api/1/node/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByFieldHandler)))
+  router.GET("/api/1/node/:nodekey/:nodekeyvalue/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByFieldHandler)))
 	router.GET("/api/1/nodes/:nodekey/:nodekeyvalue",  wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodesByFieldHandler)))
 	router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue",  wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByFieldHandler)))
+  router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue/:field",  wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByFieldHandler)))
 	router.GET("/api/1/discoverednodes/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc( appC.httpGetDiscoveredNodesByFieldHandler)))
 
 
