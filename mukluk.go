@@ -112,12 +112,14 @@ func main() {
   router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue/:field",  wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByFieldHandler)))
 	router.GET("/api/1/discoverednodes/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc( appC.httpGetDiscoveredNodesByFieldHandler)))
   router.GET("/api/1/discover/uuid/:uuid/ipv4address/:ipv4address/macaddress/:macaddress",  wrapHandler(commonHandlers.ThenFunc(appC.httpNewDiscoveredNode)))
+  router.GET("/api/1/me/node", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByMyIP)))
+  router.GET("/api/1/me/node/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByMyIP)))
+  router.GET("/api/1/me/discoverednode", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByMyIP)))
+  router.GET("/api/1/me/discoverednode/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByMyIP)))
 
 
   /*
 	router.GET("/api/1/node/:nodekey/:nodekeyvalue/ipxe", xx)
-	router.GET("/api/1/me/node", xx)
-	router.GET("/api/1/me/node/:field", xx)
 	router.GET("/api/1/os/:os_name/step/:os_step", xx)
 	router.GET("/api/1/os/:os_name/step/:os_step/:field", xx)
 	router.GET("/api/1/ipxe/chain1", xx)

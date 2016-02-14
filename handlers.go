@@ -2,6 +2,7 @@ package main
 
 import (
   "time"
+  "net"
   "net/http"
   "encoding/json"
 
@@ -117,6 +118,22 @@ func (ac appContext) httpGetNodesByFieldHandler(w http.ResponseWriter, r *http.R
 	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
 }
 
+func (ac appContext) httpGetNodeByMyIP(w http.ResponseWriter, r *http.Request) {
+	// TODO verify inputs here
+	params := context.Get(r, "params").(httprouter.Params)
+  field := params.ByName("field")
+  ipv4address, _, iperr := net.SplitHostPort(r.RemoteAddr)
+  if iperr != nil {
+    ac.errorresponse(w, http.StatusBadRequest)
+  }
+	o, oe := ac.nodestore.SingleKV("ipv4address", ipv4address)
+  if field == "" {
+    ac.objectmarshaltojsonresponse(w, o, []error{ iperr, oe } )
+  } else {
+    ac.objectandfieldtotextresponse(w, o, field, []error{ iperr, oe } )
+  }
+}
+
 
 func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
@@ -146,6 +163,21 @@ func (ac appContext) httpGetDiscoveredNodesByFieldHandler(w http.ResponseWriter,
 	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
 }
 
+func (ac appContext) httpGetDiscoveredNodeByMyIP(w http.ResponseWriter, r *http.Request) {
+	// TODO verify inputs here
+	params := context.Get(r, "params").(httprouter.Params)
+  field := params.ByName("field")
+  ipv4address, _, iperr := net.SplitHostPort(r.RemoteAddr)
+  if iperr != nil {
+    ac.errorresponse(w, http.StatusBadRequest)
+  }
+	o, oe := ac.nodesdiscoveredstore.SingleKV("ipv4address", ipv4address)
+  if field == "" {
+    ac.objectmarshaltojsonresponse(w, o, []error{ iperr, oe } )
+  } else {
+    ac.objectandfieldtotextresponse(w, o, field, []error{ iperr, oe } )
+  }
+}
 
 func (ac appContext) httpNewDiscoveredNode(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
