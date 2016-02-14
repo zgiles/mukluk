@@ -5,7 +5,7 @@ import (
 	// "errors"
   _ "github.com/go-sql-driver/mysql"
 	"database/sql"
-  "gomukluk/stores/nodesdiscovered"
+  "github.com/zgiles/mukluk/stores/nodesdiscovered"
 )
 
 type nodesdiscoveredmysqldb struct {

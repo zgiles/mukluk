@@ -3,7 +3,7 @@ package nodesmysql
 import (
   _ "github.com/go-sql-driver/mysql"
 	"database/sql"
-  "gomukluk/stores/nodes"
+  "github.com/zgiles/mukluk/stores/nodes"
 )
 
 type nodesmysqldb struct {

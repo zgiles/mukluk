@@ -6,8 +6,8 @@ import (
   "net/http"
   "encoding/json"
 
-  "gomukluk/stores/nodesdiscovered"
-  "gomukluk/ipxe"
+  "github.com/zgiles/mukluk/stores/nodesdiscovered"
+  "github.com/zgiles/mukluk/ipxe"
 
   "github.com/julienschmidt/httprouter"
   "github.com/gorilla/context"

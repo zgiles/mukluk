@@ -3,7 +3,7 @@ package nodesdiscoveredredis
 import (
 	"log"
 	"github.com/garyburd/redigo/redis"
-	"gomukluk/stores/nodesdiscovered"
+	"github.com/zgiles/mukluk/stores/nodesdiscovered"
 )
 
 type nodesdiscoveredredisdb struct {

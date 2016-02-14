@@ -12,12 +12,12 @@ import (
 	"github.com/justinas/alice"
 	"github.com/gorilla/context"
 
-  "gomukluk/stores/nodes"
-  "gomukluk/stores/nodesredis"
-  "gomukluk/stores/nodesmysql"
-  "gomukluk/stores/nodesdiscovered"
-  "gomukluk/stores/nodesdiscoveredredis"
-  "gomukluk/stores/nodesdiscoveredmysql"
+  "github.com/zgiles/mukluk/stores/nodes"
+  "github.com/zgiles/mukluk/stores/nodesredis"
+  "github.com/zgiles/mukluk/stores/nodesmysql"
+  "github.com/zgiles/mukluk/stores/nodesdiscovered"
+  "github.com/zgiles/mukluk/stores/nodesdiscoveredredis"
+  "github.com/zgiles/mukluk/stores/nodesdiscoveredmysql"
 
 )
 
