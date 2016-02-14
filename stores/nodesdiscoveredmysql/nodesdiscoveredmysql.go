@@ -2,6 +2,7 @@ package nodesdiscoveredmysql
 
 import (
 	"log"
+	// "errors"
   _ "github.com/go-sql-driver/mysql"
 	"database/sql"
   "gomukluk/stores/nodesdiscovered"
@@ -28,12 +29,24 @@ func (local nodesdiscoveredmysqldb) DbMultiKV(field string, input string) ([]nod
 }
 
 
+func (local nodesdiscoveredmysqldb) DbInsert(nd nodesdiscovered.NodesDiscovered) (nodesdiscovered.NodesDiscovered, error) {
+	stmt, stmterr := local.mysqldb.Prepare("insert into `nodes_discovered` (`uuid`, `ipv4address`, `macaddress`, `heartbeat`) VALUES (?, ?, ?, ?)")
+	if stmterr != nil {
+		return nd, nil
+	}
+	res, err := stmt.Exec(&nd.Uuid, &nd.Ipv4address, &nd.Macaddress, &nd.Heartbeat)
+	if err != nil || res == nil {
+		return nd, err
+	}
+	return nd, nil
+}
+
 func (local nodesdiscoveredmysqldb) queryGetDiscoveredNodeByField(field string, input string) (nodesdiscovered.NodesDiscovered, error) { // input string, field string
 	fn := func(input string) (nodesdiscovered.NodesDiscovered, error) {
 		n := nodesdiscovered.NodesDiscovered{}
 		err := local.mysqldb.QueryRow("select uuid, ipv4address, macaddress, surpressed, enrolled, checkincount, heartbeat from nodes_discovered where " + field + " = ? limit 1", input).Scan(&n.Uuid, &n.Ipv4address, &n.Macaddress, &n.Surpressed, &n.Enrolled, &n.Checkincount, &n.Heartbeat)
-		if err != nil && err != sql.ErrNoRows {
-			return n, nil
+		if err != nil {
+			return n, err
 		}
 		return n, nil
 	}

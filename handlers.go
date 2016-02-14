@@ -1,8 +1,13 @@
 package main
 
 import (
+  "time"
   "net/http"
   "encoding/json"
+
+  "gomukluk/stores/nodesdiscovered"
+  "gomukluk/ipxe"
+
   "github.com/julienschmidt/httprouter"
   "github.com/gorilla/context"
 )
@@ -27,11 +32,12 @@ func (ac appContext) errorresponse(w http.ResponseWriter, status int) {
 
 func (ac appContext) objectmarshaltojsonresponse(w http.ResponseWriter, o interface{}, e []error) {
 	if errorinslice(e) {
-		ac.errorresponse(w, http.StatusNotFound)
+		ac.errorresponse(w, http.StatusBadRequest)
 		return
 	}
 	js, marshallerr := json.Marshal(o)
 	if marshallerr != nil {
+    // marshall error is a coding or struct error, so internal server
 		ac.errorresponse(w, http.StatusInternalServerError)
 		return
 	}
@@ -40,12 +46,13 @@ func (ac appContext) objectmarshaltojsonresponse(w http.ResponseWriter, o interf
 
 func (ac appContext) objectandfieldtotextresponse(w http.ResponseWriter, o interface{}, field string, e []error) {
   if errorinslice(e) {
-		ac.errorresponse(w, http.StatusNotFound)
+		ac.errorresponse(w, http.StatusBadRequest)
 		return
 	}
   m, merr := reflectStructByJSONName(o, field)
   if merr != nil {
-    ac.errorresponse(w, http.StatusNotFound)
+    // like marshall, internal error. missing fields shouldnt get here
+    ac.errorresponse(w, http.StatusInternalServerError)
     return
   }
 	ac.textresponse(w, m, http.StatusOK)
@@ -137,4 +144,28 @@ func (ac appContext) httpGetDiscoveredNodesByFieldHandler(w http.ResponseWriter,
 	_, keyerr := contains(validfields, key)
 	o, oe := ac.nodesdiscoveredstore.MultiKV(key, keyvalue)
 	ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
+}
+
+
+func (ac appContext) httpNewDiscoveredNode(w http.ResponseWriter, r *http.Request) {
+	// TODO verify inputs here
+	params := context.Get(r, "params").(httprouter.Params)
+	uuid := ipxe.CleanUUID(params.ByName("uuid"))
+  ipv4address := params.ByName("ipv4address")
+  macaddress := ipxe.CleanHexHyp(params.ByName("macaddress"))
+
+  _, luerr := ac.nodesdiscoveredstore.SingleKV("uuid", uuid)
+  if luerr == nil {
+    // if it is found, that's a problem
+    ac.errorresponse(w, http.StatusBadRequest)
+    return
+  }
+  nd := nodesdiscovered.NodesDiscovered{
+    Uuid: uuid,
+    Ipv4address: ipv4address,
+    Macaddress: macaddress,
+    Heartbeat: time.Now().Unix(),
+  }
+	o, oe := ac.nodesdiscoveredstore.Insert(nd)
+  ac.objectmarshaltojsonresponse(w, o, []error{ oe } )
 }

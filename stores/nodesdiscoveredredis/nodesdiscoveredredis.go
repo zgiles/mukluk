@@ -26,6 +26,9 @@ func (local nodesdiscoveredredisdb) DbMultiKV(field string, input string) ([]nod
 	return local.redisgetDiscoveredNodesByField(field, input)
 }
 
+func (local nodesdiscoveredredisdb) DbInsert(nd nodesdiscovered.NodesDiscovered) (nodesdiscovered.NodesDiscovered, error) {
+	return nodesdiscovered.NodesDiscovered{}, nil
+}
 
 func (local nodesdiscoveredredisdb) redisgetDiscoveredNodesByField(field string, input string) ([]nodesdiscovered.NodesDiscovered, error) {
 		n := []nodesdiscovered.NodesDiscovered{}
