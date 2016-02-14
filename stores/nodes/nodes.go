@@ -24,15 +24,15 @@ type NodeStoreDB interface {
 }
 
 type store struct {
-  nsdb NodeStoreDB
+  db NodeStoreDB
 }
 
 func (local store) SingleKV(field string, input string) (Node, error) {
-	return local.nsdb.DbSingleKV(field, input)
+	return local.db.DbSingleKV(field, input)
 }
 
 func (local store) MultiKV(field string, input string) ([]Node, error) {
-	return local.nsdb.DbMultiKV(field, input)
+	return local.db.DbMultiKV(field, input)
 }
 
 func NewNodeStore(db1 NodeStoreDB) NodeStore {

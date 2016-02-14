@@ -21,15 +21,15 @@ type NodesDiscoveredStoreDB interface {
 }
 
 type store struct {
-  redis NodesDiscoveredStoreDB
+  db NodesDiscoveredStoreDB
 }
 
 func (local store) SingleKV(field string, input string) (NodesDiscovered, error) {
-	return local.redis.DbSingleKV(field, input)
+	return local.db.DbSingleKV(field, input)
 }
 
 func (local store) MultiKV(field string, input string) ([]NodesDiscovered, error) {
-	return local.redis.DbMultiKV(field, input)
+	return local.db.DbMultiKV(field, input)
 }
 
 func NewNodesDiscoveredStore(db1 NodesDiscoveredStoreDB) NodesDiscoveredStore {
