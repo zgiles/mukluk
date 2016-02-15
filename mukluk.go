@@ -18,12 +18,15 @@ import (
   "github.com/zgiles/mukluk/stores/nodesdiscovered"
   "github.com/zgiles/mukluk/stores/nodesdiscoveredredis"
   "github.com/zgiles/mukluk/stores/nodesdiscoveredmysql"
+  "github.com/zgiles/mukluk/stores/oses"
+  "github.com/zgiles/mukluk/stores/osesmysql"
 
 )
 
 type appContext struct {
   nodestore nodes.NodeStore
   nodesdiscoveredstore nodesdiscovered.NodesDiscoveredStore
+  osstore oses.OsStore
 }
 
 func main() {
@@ -44,6 +47,8 @@ func main() {
   var nodestore nodes.NodeStore
   var nodesdiscoveredstoredb nodesdiscovered.NodesDiscoveredStoreDB
   var nodesdiscoveredstore nodesdiscovered.NodesDiscoveredStore
+  var osstoredb oses.OsStoreDB
+  var osstore oses.OsStore
 
   switch config.Serverconfig.Maindb {
     case "mysql":
@@ -67,6 +72,11 @@ func main() {
       nodesdiscoveredstoredb = nodesdiscoveredmysql.NewNodesDiscoveredMysql(mysqlpool)
       log.Println("mysql: opening NodesDiscoveredStore")
       nodesdiscoveredstore = nodesdiscovered.NewNodesDiscoveredStore(nodesdiscoveredstoredb)
+
+      log.Println("mysql: opening OsStoreDB")
+      osstoredb = osesmysql.NewOsesMysql(mysqlpool)
+      log.Println("mysql: opening OsStore")
+      osstore = oses.NewOsStore(osstoredb)
 
     case "redis":
       if config.Redisconfig.Enabled == false { log.Fatal("redis selected, but not enabled") }
@@ -96,7 +106,7 @@ func main() {
   }
 
 	// app context
-  appC := appContext{ nodestore: nodestore, nodesdiscoveredstore: nodesdiscoveredstore }
+  appC := appContext{ nodestore: nodestore, nodesdiscoveredstore: nodesdiscoveredstore, osstore: osstore }
   log.Println("app ready")
 
 	// common routes
@@ -116,12 +126,15 @@ func main() {
   router.GET("/api/1/me/node/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByMyIP)))
   router.GET("/api/1/me/discoverednode", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByMyIP)))
   router.GET("/api/1/me/discoverednode/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByMyIP)))
+  router.GET("/api/1/os/:os_name/step/:os_step", wrapHandler(commonHandlers.ThenFunc(appC.httpGetOsByNameAndStepHandler)))
+  router.GET("/api/1/os/:os_name/step/:os_step/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetOsByNameAndStepHandler)))
+  router.GET("/api/1/me/os", wrapHandler(commonHandlers.ThenFunc(appC.httpOsNodeByMyIP)))
+  router.GET("/api/1/me/os/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpOsNodeByMyIP)))
+
 
 
   /*
 	router.GET("/api/1/node/:nodekey/:nodekeyvalue/ipxe", xx)
-	router.GET("/api/1/os/:os_name/step/:os_step", xx)
-	router.GET("/api/1/os/:os_name/step/:os_step/:field", xx)
 	router.GET("/api/1/ipxe/chain1", xx)
 	*/
 

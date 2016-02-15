@@ -5,6 +5,7 @@ import (
   "net"
   "net/http"
   "encoding/json"
+  "strconv"
 
   "github.com/zgiles/mukluk/stores/nodesdiscovered"
   "github.com/zgiles/mukluk/ipxe"
@@ -134,6 +135,22 @@ func (ac appContext) httpGetNodeByMyIP(w http.ResponseWriter, r *http.Request) {
   }
 }
 
+func (ac appContext) httpOsNodeByMyIP(w http.ResponseWriter, r *http.Request) {
+	// TODO verify inputs here
+	params := context.Get(r, "params").(httprouter.Params)
+  field := params.ByName("field")
+  ipv4address, _, iperr := net.SplitHostPort(r.RemoteAddr)
+  if iperr != nil {
+    ac.errorresponse(w, http.StatusBadRequest)
+  }
+	n, ne := ac.nodestore.SingleKV("ipv4address", ipv4address)
+  o, oe := ac.osstore.SingleNameStep(n.Os_name, strconv.FormatInt(n.Os_step, 10))
+  if field == "" {
+    ac.objectmarshaltojsonresponse(w, o, []error{ iperr, ne, oe } )
+  } else {
+    ac.objectandfieldtotextresponse(w, o, field, []error{ iperr, ne, oe } )
+  }
+}
 
 func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
@@ -200,4 +217,23 @@ func (ac appContext) httpNewDiscoveredNode(w http.ResponseWriter, r *http.Reques
   }
 	o, oe := ac.nodesdiscoveredstore.Insert(nd)
   ac.objectmarshaltojsonresponse(w, o, []error{ oe } )
+}
+
+
+// httpGetOsByNameAndStepHandler
+func (ac appContext) httpGetOsByNameAndStepHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO verify inputs here
+	params := context.Get(r, "params").(httprouter.Params)
+	// validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress" }
+	os_name := params.ByName("os_name")
+	os_step := params.ByName("os_step")
+  field := params.ByName("field")
+	// _, keyerr := contains(validfields, key)
+  var keyerr error = nil
+	o, oe := ac.osstore.SingleNameStep(os_name, os_step)
+  if field == "" {
+    ac.objectmarshaltojsonresponse(w, o, []error{ keyerr, oe } )
+  } else {
+    ac.objectandfieldtotextresponse(w, o, field, []error{ keyerr, oe } )
+  }
 }
