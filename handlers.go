@@ -237,3 +237,30 @@ func (ac appContext) httpGetOsByNameAndStepHandler(w http.ResponseWriter, r *htt
     ac.objectandfieldtotextresponse(w, o, field, []error{ keyerr, oe } )
   }
 }
+
+func (ac appContext) httpipxechain(w http.ResponseWriter, r *http.Request) {
+  s := ipxe.UuidBoot(r.Host)
+  ac.textresponse(w, s, http.StatusOK)
+}
+
+func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
+  params := context.Get(r, "params").(httprouter.Params)
+  validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress" }
+  key := params.ByName("nodekey")
+  keyvalue := params.ByName("nodekeyvalue")
+  _, keyerr := contains(validfields, key)
+  if keyerr != nil {
+    ac.errorresponse(w, http.StatusBadRequest)
+  }
+  n, ne := ac.nodestore.SingleKV(key, keyvalue)
+  if ne != nil {
+    ac.errorresponse(w, http.StatusBadRequest)
+  }
+  o, oe := ac.osstore.SingleNameStep(n.Os_name, strconv.FormatInt(n.Os_step, 10))
+  if oe != nil {
+    ac.errorresponse(w, http.StatusBadRequest)
+  }
+  s := ipxe.OsBoot(o, r.Host)
+  // if all successful, change to next os step
+  ac.textresponse(w, s, http.StatusOK)
+}
