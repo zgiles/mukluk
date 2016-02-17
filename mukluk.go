@@ -129,22 +129,14 @@ func main() {
   router.GET("/api/1/os/:os_name/step/:os_step/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetOsByNameAndStepHandler)))
   router.GET("/api/1/me/os", wrapHandler(commonHandlers.ThenFunc(appC.httpOsNodeByMyIP)))
   router.GET("/api/1/me/os/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpOsNodeByMyIP)))
-
   router.GET("/api/1/ipxe/chain1", wrapHandler(commonHandlers.ThenFunc(appC.httpipxechain)))
   router.GET("/api/1/node/:nodekey/:nodekeyvalue/ipxe", wrapHandler(commonHandlers.ThenFunc(appC.httpipxeNode)))
   router.GET("/api/1/discover/uuid/:uuid/ipv4address/:ipv4address/macaddress/:macaddress",  wrapHandler(commonHandlers.ThenFunc(appC.httpipxediscover)))
 
-
-  /*
-	router.GET("/api/1/node/:nodekey/:nodekeyvalue/ipxe", xx)
-	router.GET("/api/1/ipxe/chain1", xx)
-	*/
-
-
   httpsrv := &graceful.Server{
     Timeout: time.Duration(config.Serverconfig.Closetimeout) * time.Second,
     Server: &http.Server{
-      Addr: ":" + strconv.FormatInt(config.Serverconfig.Port, 10),
+      Addr: config.Serverconfig.Ip + ":" + strconv.FormatInt(config.Serverconfig.Port, 10),
       Handler: router,
     },
   }

@@ -1,0 +1,14 @@
+[mysqlconfig]
+enabled = true
+connectstring = "USER:PASSWORD@tcp(SERVER:3306)/DATABASE"
+
+[redisconfig]
+enabled = true
+host = ":6379"
+password = ""
+
+[serverconfig]
+maindb = "mysql"
+ip = ""
+port = 8080
+closetimeout = 5
