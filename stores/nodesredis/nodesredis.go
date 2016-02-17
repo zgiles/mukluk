@@ -26,6 +26,10 @@ func (nrdb nodesredisdb) DbMultiKV(field string, input string) ([]nodes.Node, er
 	return nrdb.redisgetNodesByField(field, input)
 }
 
+func (nrdb nodesredisdb) DbUpdateSingleKV(uuid string, key string, value string) (error) {
+	return nil
+}
+
 func (nrdb nodesredisdb) redisgetNodesByField(field string, input string) ([]nodes.Node, error) {
 		n := []nodes.Node{}
 		conn := nrdb.redispool.Get()

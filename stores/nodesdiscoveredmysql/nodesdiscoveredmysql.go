@@ -32,7 +32,7 @@ func (local nodesdiscoveredmysqldb) DbMultiKV(field string, input string) ([]nod
 func (local nodesdiscoveredmysqldb) DbInsert(nd nodesdiscovered.NodesDiscovered) (nodesdiscovered.NodesDiscovered, error) {
 	stmt, stmterr := local.mysqldb.Prepare("insert into `nodes_discovered` (`uuid`, `ipv4address`, `macaddress`, `heartbeat`) VALUES (?, ?, ?, ?)")
 	if stmterr != nil {
-		return nd, nil
+		return nd, stmterr
 	}
 	res, err := stmt.Exec(&nd.Uuid, &nd.Ipv4address, &nd.Macaddress, &nd.Heartbeat)
 	if err != nil || res == nil {
@@ -40,6 +40,19 @@ func (local nodesdiscoveredmysqldb) DbInsert(nd nodesdiscovered.NodesDiscovered)
 	}
 	return nd, nil
 }
+
+func (local nodesdiscoveredmysqldb) DbUpdateSingleKV(uuid string, key string, value string) (error) {
+	stmt, stmterr := local.mysqldb.Prepare("UPDATE `nodes_discovered` SET `" + key + "` = ? WHERE `uuid` = ?")
+	if stmterr != nil {
+		return stmterr
+	}
+	res, err := stmt.Exec(value, uuid)
+	if err != nil || res == nil {
+		return stmterr
+	}
+	return nil
+}
+
 
 func (local nodesdiscoveredmysqldb) queryGetDiscoveredNodeByField(field string, input string) (nodesdiscovered.NodesDiscovered, error) { // input string, field string
 	fn := func(input string) (nodesdiscovered.NodesDiscovered, error) {

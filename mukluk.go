@@ -121,7 +121,6 @@ func main() {
 	router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue",  wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByFieldHandler)))
   router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue/field/:field",  wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByFieldHandler)))
 	router.GET("/api/1/discoverednodes/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc( appC.httpGetDiscoveredNodesByFieldHandler)))
-  router.GET("/api/1/discover/uuid/:uuid/ipv4address/:ipv4address/macaddress/:macaddress",  wrapHandler(commonHandlers.ThenFunc(appC.httpNewDiscoveredNode)))
   router.GET("/api/1/me/node", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByMyIP)))
   router.GET("/api/1/me/node/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByMyIP)))
   router.GET("/api/1/me/discoverednode", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByMyIP)))
@@ -133,6 +132,7 @@ func main() {
 
   router.GET("/api/1/ipxe/chain1", wrapHandler(commonHandlers.ThenFunc(appC.httpipxechain)))
   router.GET("/api/1/node/:nodekey/:nodekeyvalue/ipxe", wrapHandler(commonHandlers.ThenFunc(appC.httpipxeNode)))
+  router.GET("/api/1/discover/uuid/:uuid/ipv4address/:ipv4address/macaddress/:macaddress",  wrapHandler(commonHandlers.ThenFunc(appC.httpipxediscover)))
 
 
   /*

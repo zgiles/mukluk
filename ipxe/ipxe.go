@@ -25,11 +25,11 @@ func OsBoot(o oses.Os, s string) (string) {
     case "pxe":
       return pxeLinuxBoot(o, s)
     case "local":
-      return localboot()
+      return Localboot()
     case "holdandwait":
       return holdandwait(s)
     default:
-      return noop()
+      return Noop()
   }
 }
 
@@ -57,7 +57,7 @@ exit
   return r
 }
 
-func localboot() (string) {
+func Localboot() (string) {
   r := `#!ipxe
 echo local boot.
 sleep 1
@@ -85,7 +85,7 @@ reboot
   return r
 }
 
-func noop() (string) {
+func Noop() (string) {
   r := `#!ipxe
 echo error on server. sleep 30 then local boot.
 sleep 30
@@ -96,7 +96,7 @@ exit
   return r
 }
 
-func enrollmentboot(s string) (string) {
+func Enrollmentboot(s string) (string) {
   r := `#!ipxe\n\n";
 echo generateEnrollmentBoot...\n";
 chain http://` + s + `/api/1/discover/uuid/${uuid}/ipv4address/${ip:ipv4}/macaddress/${mac:hexhyp} || goto error

@@ -1,13 +1,11 @@
 package main
 
 import (
-  "time"
   "net"
   "net/http"
   "encoding/json"
   "strconv"
 
-  "github.com/zgiles/mukluk/stores/nodesdiscovered"
   "github.com/zgiles/mukluk/ipxe"
 
   "github.com/julienschmidt/httprouter"
@@ -196,30 +194,6 @@ func (ac appContext) httpGetDiscoveredNodeByMyIP(w http.ResponseWriter, r *http.
   }
 }
 
-func (ac appContext) httpNewDiscoveredNode(w http.ResponseWriter, r *http.Request) {
-	// TODO verify inputs here
-	params := context.Get(r, "params").(httprouter.Params)
-	uuid := ipxe.CleanUUID(params.ByName("uuid"))
-  ipv4address := params.ByName("ipv4address")
-  macaddress := ipxe.CleanHexHyp(params.ByName("macaddress"))
-
-  _, luerr := ac.nodesdiscoveredstore.SingleKV("uuid", uuid)
-  if luerr == nil {
-    // if it is found, that's a problem
-    ac.errorresponse(w, http.StatusBadRequest)
-    return
-  }
-  nd := nodesdiscovered.NodesDiscovered{
-    Uuid: uuid,
-    Ipv4address: ipv4address,
-    Macaddress: macaddress,
-    Heartbeat: time.Now().Unix(),
-  }
-	o, oe := ac.nodesdiscoveredstore.Insert(nd)
-  ac.objectmarshaltojsonresponse(w, o, []error{ oe } )
-}
-
-
 // httpGetOsByNameAndStepHandler
 func (ac appContext) httpGetOsByNameAndStepHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
@@ -250,17 +224,67 @@ func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
   keyvalue := params.ByName("nodekeyvalue")
   _, keyerr := contains(validfields, key)
   if keyerr != nil {
-    ac.errorresponse(w, http.StatusBadRequest)
+    // problem with the request, reply with noop
+    s := ipxe.Noop()
+    ac.textresponse(w, s, http.StatusOK)
+    return
   }
   n, ne := ac.nodestore.SingleKV(key, keyvalue)
   if ne != nil {
-    ac.errorresponse(w, http.StatusBadRequest)
+    // node not found. Generate enrollment
+    s := ipxe.Enrollmentboot(r.Host)
+    ac.textresponse(w, s, http.StatusOK)
+    return
   }
   o, oe := ac.osstore.SingleNameStep(n.Os_name, strconv.FormatInt(n.Os_step, 10))
   if oe != nil {
-    ac.errorresponse(w, http.StatusBadRequest)
+    // problem with OS, generate noop
+    s := ipxe.Noop()
+    ac.textresponse(w, s, http.StatusOK)
+    return
   }
+  // should be able to generate an ipxe from the OS, it will noop if not functioning
   s := ipxe.OsBoot(o, r.Host)
   // if all successful, change to next os step
+  ue := ac.nodestore.UpdateOsStep(n.Uuid, o.Next_step)
+  if ue != nil {
+    // problem with OS, generate noop
+    s := ipxe.Noop()
+    ac.textresponse(w, s, http.StatusOK)
+    return
+  }
+  ac.textresponse(w, s, http.StatusOK)
+}
+
+
+func (ac appContext) httpipxediscover(w http.ResponseWriter, r *http.Request) {
+	// TODO verify inputs here
+	params := context.Get(r, "params").(httprouter.Params)
+	uuid := ipxe.CleanUUID(params.ByName("uuid"))
+  ipv4address := params.ByName("ipv4address")
+  macaddress := ipxe.CleanHexHyp(params.ByName("macaddress"))
+
+  _, luerr := ac.nodesdiscoveredstore.SingleKV("uuid", uuid)
+  if luerr == nil {
+    // if it is found, update the count
+    _, ce := ac.nodesdiscoveredstore.UpdateCount(uuid)
+    if ce != nil {
+      // if updating the count didnt work, something else is wrong
+      s := ipxe.Noop()
+      ac.textresponse(w, s, http.StatusOK)
+      return
+    }
+  } else {
+    // if not found, make it
+    _, oe := ac.nodesdiscoveredstore.CreateAndInsert(uuid, ipv4address, macaddress)
+    if oe != nil {
+      // error making it, noop the node
+      s := ipxe.Noop()
+      ac.textresponse(w, s, http.StatusOK)
+      return
+    }
+  }
+  // if no errors, boot locally
+  s := ipxe.Localboot()
   ac.textresponse(w, s, http.StatusOK)
 }

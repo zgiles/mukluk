@@ -27,6 +27,18 @@ func (local nodesmysqldb) DbMultiKV(field string, input string) ([]nodes.Node, e
 }
 
 
+func (local nodesmysqldb) DbUpdateSingleKV(uuid string, key string, value string) (error) {
+	stmt, stmterr := local.mysqldb.Prepare("UPDATE `nodes` SET `" + key + "` = ? WHERE `uuid` = ?")
+	if stmterr != nil {
+		return stmterr
+	}
+	res, err := stmt.Exec(value, uuid)
+	if err != nil || res == nil {
+		return stmterr
+	}
+	return nil
+}
+
 // DB QUERIES
 
 // queryGetNodeByField

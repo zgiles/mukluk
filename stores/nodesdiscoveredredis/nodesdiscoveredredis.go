@@ -30,6 +30,10 @@ func (local nodesdiscoveredredisdb) DbInsert(nd nodesdiscovered.NodesDiscovered)
 	return nodesdiscovered.NodesDiscovered{}, nil
 }
 
+func (local nodesdiscoveredredisdb) DbUpdateSingleKV(uuid string, key string, value string) (error) {
+	return nil
+}
+
 func (local nodesdiscoveredredisdb) redisgetDiscoveredNodesByField(field string, input string) ([]nodesdiscovered.NodesDiscovered, error) {
 		n := []nodesdiscovered.NodesDiscovered{}
 		conn := local.redispool.Get()
