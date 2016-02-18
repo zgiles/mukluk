@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"gopkg.in/tylerb/graceful.v1"
+	"github.com/tylerb/graceful" // "gopkg.in/tylerb/graceful.v1"
 	"net/http"
 
 	"github.com/gorilla/context"
