@@ -43,7 +43,7 @@ chain http://` + s + `/api/1/node/uuid/${uuid}/ipxe
 func pxeLinuxBoot(o oses.Os, s string) (string) {
   r := `#!ipxe
 echo generateSimpleLinuxNetBoot running...
-initrd` + o.Boot_initrd + `
+initrd ` + o.Boot_initrd + `
 kernel ` + o.Boot_kernel + ` ` + o.Boot_options + `
 boot || goto error
 goto exit

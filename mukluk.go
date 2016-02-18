@@ -69,7 +69,7 @@ func main() {
 		log.Println("mysql: opening NodeStore")
 		nodestore = nodes.NewNodeStore(nodestoredb)
 
-		log.Println("mysql: opening NodeDiscoveredStoreDB")
+		log.Println("mysql: opening NodesDiscoveredStoreDB")
 		nodesdiscoveredstoredb = nodesdiscoveredmysql.NewNodesDiscoveredMysql(mysqlpool)
 		log.Println("mysql: opening NodesDiscoveredStore")
 		nodesdiscoveredstore = nodesdiscovered.NewNodesDiscoveredStore(nodesdiscoveredstoredb)
