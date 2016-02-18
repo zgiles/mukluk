@@ -97,8 +97,8 @@ exit
 }
 
 func Enrollmentboot(s string) (string) {
-  r := `#!ipxe\n\n";
-echo generateEnrollmentBoot...\n";
+  r := `#!ipxe
+echo generateEnrollmentBoot...
 chain http://` + s + `/api/1/discover/uuid/${uuid}/ipv4address/${ip:ipv4}/macaddress/${mac:hexhyp} || goto error
 goto exit
 :error

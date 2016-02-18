@@ -60,6 +60,11 @@ func (ac appContext) objectandfieldtotextresponse(w http.ResponseWriter, o inter
 
 // HANDLERS
 
+func errorHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(500)
+	w.Write([]byte("Internal Error"))
+}
+
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("This is the API URL. Please read the docs (if they exist)."))
 }

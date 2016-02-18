@@ -136,6 +136,8 @@ func main() {
 	router.GET("/api/1/node/:nodekey/:nodekeyvalue/ipxe", wrapHandler(commonHandlers.ThenFunc(appC.httpipxeNode)))
 	router.GET("/api/1/discover/uuid/:uuid/ipv4address/:ipv4address/macaddress/:macaddress", wrapHandler(commonHandlers.ThenFunc(appC.httpipxediscover)))
 
+  router.NotFound = commonHandlers.ThenFunc(errorHandler)
+
 	httpsrv := &graceful.Server{
 		Timeout: time.Duration(config.Serverconfig.Closetimeout) * time.Second,
 		Server: &http.Server{
