@@ -12,24 +12,12 @@ Today's network booting tools leave much to be desired. Mukluk is an attempt at 
 * API for external inspection and node self-discovery
 
 ## Installation / Building
-Pre-built binary versions (no external dependencies can be found under the Releases tag at the top)
+Pre-built binary versions can be found under the Releases tag at the top
 
 If you would like to build it yourself:  
-A few dependencies are necessary to build mukluk. Make sure your `$GOPATH` is setup correctly, then `go get` the the dependencies:
 ```
-go get github.com/BurntSushi/toml
-go get github.com/garyburd/redigo/redis
-go get github.com/go-sql-driver/mysql
-go get github.com/gorilla/context
-go get github.com/julienschmidt/httprouter
-go get github.com/justinas/alice
-go get gopkg.in/tylerb/graceful.v1
-
 go get github.com/zgiles/mukluk
-
 ```
-( dependency versioning is not provided at this time, as that's not typical of golang. More thought will be needed on this... )  
-The last line will download this repo and compile against the dependencies This should provide a single binary that you can copy to your server.
 
 ## Database
 A database will need to be configured.  
@@ -37,9 +25,10 @@ If using MySQL, create the tables from docs/mysql/schema.sql
 If using Redis, no work needs to be done, mukluk will create keys on the fly and prefix them with "mukluk:"
 
 ## Usage / Config
-mukluk currently pulls its config from the file config.toml, in the same folder as the binary. Fill in the config details.  
-Then run `./mukluk` Logging is to STDERR and pretty verbose.  
-Optionally make some type of startup script, or wait until I do it. (see TODOs)  
+mukluk currently pulls its config from the file config.toml, in the same folder as the binary. Fill in the config details. The sample config file is in the `docs/` folder  
+Then run `./mukluk`  
+Logging is to STDERR and pretty verbose.  
+Optionally make some type of startup script. ( or wait until I do it.. see TODOs)  
 
 ## KNOWN ISSUES
 * Redis plugin may be a bit behind.. mysql should be the only properly working one for now
@@ -62,6 +51,7 @@ Optionally make some type of startup script, or wait until I do it. (see TODOs)
 * variable verbosity / logging options
 * better abstraction in the handlers.go file
 * TLS
+* dependency versioning
 
 ## Release History
 * 0.1.0 - Initial release
