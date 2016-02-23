@@ -228,7 +228,7 @@ func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
 	_, keyerr := contains(validfields, key)
 	if keyerr != nil {
 		// problem with the request, reply with noop
-		s := ipxe.Noop()
+		s := ipxe.NoopString(keyerr.Error())
 		ac.textresponse(w, s, http.StatusOK)
 		return
 	}
@@ -242,7 +242,7 @@ func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
 	o, oe := ac.osstore.SingleNameStep(n.Os_name, strconv.FormatInt(n.Os_step, 10))
 	if oe != nil {
 		// problem with OS, generate noop
-		s := ipxe.Noop()
+		s := ipxe.NoopString(oe.Error())
 		ac.textresponse(w, s, http.StatusOK)
 		return
 	}
@@ -252,7 +252,7 @@ func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
 	ue := ac.nodestore.UpdateOsStep(n.Uuid, o.Next_step)
 	if ue != nil {
 		// problem with OS, generate noop
-		s := ipxe.Noop()
+		s := ipxe.NoopString(ue.Error())
 		ac.textresponse(w, s, http.StatusOK)
 		return
 	}
@@ -272,7 +272,7 @@ func (ac appContext) httpipxediscover(w http.ResponseWriter, r *http.Request) {
 		_, ce := ac.nodesdiscoveredstore.UpdateCount(uuid)
 		if ce != nil {
 			// if updating the count didnt work, something else is wrong
-			s := ipxe.Noop()
+			s := ipxe.NoopString(ce.Error())
 			ac.textresponse(w, s, http.StatusOK)
 			return
 		}
@@ -281,7 +281,7 @@ func (ac appContext) httpipxediscover(w http.ResponseWriter, r *http.Request) {
 		_, oe := ac.nodesdiscoveredstore.CreateAndInsert(uuid, ipv4address, macaddress)
 		if oe != nil {
 			// error making it, noop the node
-			s := ipxe.Noop()
+			s := ipxe.NoopString(oe.Error())
 			ac.textresponse(w, s, http.StatusOK)
 			return
 		}

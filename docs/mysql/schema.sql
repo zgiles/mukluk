@@ -20,7 +20,7 @@ CREATE TABLE `nodes_discovered` (
   `enrolled` tinyint(4) NOT NULL DEFAULT '0',
   `checkincount` int(11) NOT NULL DEFAULT '0',
   `heartbeat` int(11) DEFAULT NULL,
-  PRIMARY KEY (`uuid`)
+  PRIMARY KEY (`uuid`,`ipv4address`,`macaddress`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `os` (

@@ -96,6 +96,18 @@ exit
   return r
 }
 
+func NoopString(e string) (string) {
+  r := `#!ipxe
+echo ` + e +`
+echo error on server. sleep 30 then local boot.
+sleep 30
+goto exit
+:exit
+exit
+`
+  return r
+}
+
 func Enrollmentboot(s string) (string) {
   r := `#!ipxe
 echo generateEnrollmentBoot...
