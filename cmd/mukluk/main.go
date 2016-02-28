@@ -12,20 +12,21 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
 
-	"github.com/zgiles/mukluk/stores/nodes"
-	"github.com/zgiles/mukluk/stores/nodesdiscovered"
+	"github.com/zgiles/mukluk/nodestore"
+	"github.com/zgiles/mukluk/osstore"
+	"github.com/zgiles/mukluk/nodesdiscoveredstore"
+
 	"github.com/zgiles/mukluk/stores/nodesdiscoveredmysql"
 	"github.com/zgiles/mukluk/stores/nodesdiscoveredredis"
 	"github.com/zgiles/mukluk/stores/nodesmysql"
 	"github.com/zgiles/mukluk/stores/nodesredis"
-	"github.com/zgiles/mukluk/stores/oses"
 	"github.com/zgiles/mukluk/stores/osesmysql"
 )
 
 type appContext struct {
-	nodestore            	nodes.NodeStore
-	nodesdiscoveredstore 	nodesdiscovered.NodesDiscoveredStore
-	osstore             	oses.OsStore
+	nodestore            	nodestore.StoreI
+	nodesdiscoveredstore 	nodesdiscoveredstore.StoreI
+	osstore             	osstore.StoreI
 	ipxeconfig            ipxeconfig
 }
 
@@ -43,12 +44,12 @@ func main() {
 		log.Fatal(configerr)
 	}
 
-	var nodestoredb nodes.NodeStoreDB
-	var nodestore nodes.NodeStore
-	var nodesdiscoveredstoredb nodesdiscovered.NodesDiscoveredStoreDB
-	var nodesdiscoveredstore nodesdiscovered.NodesDiscoveredStore
-	var osstoredb oses.OsStoreDB
-	var osstore oses.OsStore
+	var l_nodestoredb nodestore.StoreDBI
+	var l_nodestore nodestore.StoreI
+	var l_nodesdiscoveredstoredb nodesdiscoveredstore.StoreDBI
+	var l_nodesdiscoveredstore nodesdiscoveredstore.StoreI
+	var l_osstoredb osstore.StoreDBI
+	var l_osstore osstore.StoreI
 
 	switch config.Serverconfig.Maindb {
 	case "mysql":
@@ -66,19 +67,19 @@ func main() {
 		log.Println("mysql: open")
 
 		log.Println("mysql: opening NodeStoreDB")
-		nodestoredb = nodesmysql.NewNodesMysql(mysqlpool)
+		l_nodestoredb = nodesmysql.New(mysqlpool)
 		log.Println("mysql: opening NodeStore")
-		nodestore = nodes.NewNodeStore(nodestoredb)
+		l_nodestore = nodestore.New(l_nodestoredb)
 
 		log.Println("mysql: opening NodesDiscoveredStoreDB")
-		nodesdiscoveredstoredb = nodesdiscoveredmysql.NewNodesDiscoveredMysql(mysqlpool)
+		l_nodesdiscoveredstoredb = nodesdiscoveredmysql.New(mysqlpool)
 		log.Println("mysql: opening NodesDiscoveredStore")
-		nodesdiscoveredstore = nodesdiscovered.NewNodesDiscoveredStore(nodesdiscoveredstoredb)
+		l_nodesdiscoveredstore = nodesdiscoveredstore.New(l_nodesdiscoveredstoredb)
 
 		log.Println("mysql: opening OsStoreDB")
-		osstoredb = osesmysql.NewOsesMysql(mysqlpool)
+		l_osstoredb = osesmysql.New(mysqlpool)
 		log.Println("mysql: opening OsStore")
-		osstore = oses.NewOsStore(osstoredb)
+		l_osstore = osstore.New(l_osstoredb)
 
 	case "redis":
 		if config.Redisconfig.Enabled == false {
@@ -95,14 +96,14 @@ func main() {
 		log.Println("redis: open")
 
 		log.Println("redis: opening NodeStoreDB")
-		nodestoredb = nodesredis.NewNodesRedis(redispool)
+		l_nodestoredb = nodesredis.New(redispool)
 		log.Println("redis: opening NodeStore")
-		nodestore = nodes.NewNodeStore(nodestoredb)
+		l_nodestore = nodestore.New(l_nodestoredb)
 
 		log.Println("redis: opening NodeDiscoveredStoreDB")
-		nodesdiscoveredstoredb = nodesdiscoveredredis.NewNodesDiscoveredRedis(redispool)
+		l_nodesdiscoveredstoredb = nodesdiscoveredredis.New(redispool)
 		log.Println("redis: opening NodesDiscoveredStore")
-		nodesdiscoveredstore = nodesdiscovered.NewNodesDiscoveredStore(nodesdiscoveredstoredb)
+		l_nodesdiscoveredstore = nodesdiscoveredstore.New(l_nodesdiscoveredstoredb)
 
 	default:
 		log.Fatal("no valid db selected as primary")
@@ -110,7 +111,10 @@ func main() {
 	}
 
 	// app context
-	appC := appContext{ nodestore: nodestore, nodesdiscoveredstore: nodesdiscoveredstore, osstore: osstore, ipxeconfig: config.Ipxeconfig }
+	appC := appContext{ nodestore: l_nodestore,
+		nodesdiscoveredstore: l_nodesdiscoveredstore,
+		osstore: l_osstore,
+		ipxeconfig: config.Ipxeconfig }
 	log.Println("app ready")
 
 	// common routes

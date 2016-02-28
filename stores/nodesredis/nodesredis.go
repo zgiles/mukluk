@@ -3,26 +3,26 @@ package nodesredis
 import (
 	"log"
 	"github.com/garyburd/redigo/redis"
-	"github.com/zgiles/mukluk/stores/nodes"
+	"github.com/zgiles/mukluk"
 )
 
 type nodesredisdb struct {
   redispool *redis.Pool
 }
 
-func NewNodesRedis(redispool *redis.Pool) *nodesredisdb {
+func New(redispool *redis.Pool) *nodesredisdb {
 	return &nodesredisdb{redispool}
 }
 
-func (nrdb nodesredisdb) DbSingleKV(field string, input string) (nodes.Node, error) {
+func (nrdb nodesredisdb) DbSingleKV(field string, input string) (mukluk.Node, error) {
 	answer, err := nrdb.redisgetNodesByField(field, input)
 	if err != nil {
-		return nodes.Node{}, err
+		return mukluk.Node{}, err
 	}
 	return answer[0], nil
 }
 
-func (nrdb nodesredisdb) DbMultiKV(field string, input string) ([]nodes.Node, error) {
+func (nrdb nodesredisdb) DbMultiKV(field string, input string) ([]mukluk.Node, error) {
 	return nrdb.redisgetNodesByField(field, input)
 }
 
@@ -30,8 +30,8 @@ func (nrdb nodesredisdb) DbUpdateSingleKV(uuid string, key string, value string)
 	return nil
 }
 
-func (nrdb nodesredisdb) redisgetNodesByField(field string, input string) ([]nodes.Node, error) {
-		n := []nodes.Node{}
+func (nrdb nodesredisdb) redisgetNodesByField(field string, input string) ([]mukluk.Node, error) {
+		n := []mukluk.Node{}
 		conn := nrdb.redispool.Get()
 		defer conn.Close()
 		values, err := redis.Values(conn.Do("SORT", "mssmhpc:mukluk:index:nodes:" + field + ":" + input,

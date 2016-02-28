@@ -3,39 +3,39 @@ package nodesdiscoveredredis
 import (
 	"log"
 	"github.com/garyburd/redigo/redis"
-	"github.com/zgiles/mukluk/stores/nodesdiscovered"
+	"github.com/zgiles/mukluk"
 )
 
 type nodesdiscoveredredisdb struct {
   redispool *redis.Pool
 }
 
-func NewNodesDiscoveredRedis(redispool *redis.Pool) *nodesdiscoveredredisdb {
+func New(redispool *redis.Pool) *nodesdiscoveredredisdb {
 	return &nodesdiscoveredredisdb{redispool}
 }
 
-func (local nodesdiscoveredredisdb) DbSingleKV(field string, input string) (nodesdiscovered.NodesDiscovered, error) {
+func (local nodesdiscoveredredisdb) DbSingleKV(field string, input string) (mukluk.NodesDiscovered, error) {
 	answer, err := local.redisgetDiscoveredNodesByField(field, input)
 	if err != nil {
-		return nodesdiscovered.NodesDiscovered{}, err
+		return mukluk.NodesDiscovered{}, err
 	}
 	return answer[0], nil
 }
 
-func (local nodesdiscoveredredisdb) DbMultiKV(field string, input string) ([]nodesdiscovered.NodesDiscovered, error) {
+func (local nodesdiscoveredredisdb) DbMultiKV(field string, input string) ([]mukluk.NodesDiscovered, error) {
 	return local.redisgetDiscoveredNodesByField(field, input)
 }
 
-func (local nodesdiscoveredredisdb) DbInsert(nd nodesdiscovered.NodesDiscovered) (nodesdiscovered.NodesDiscovered, error) {
-	return nodesdiscovered.NodesDiscovered{}, nil
+func (local nodesdiscoveredredisdb) DbInsert(nd mukluk.NodesDiscovered) (mukluk.NodesDiscovered, error) {
+	return mukluk.NodesDiscovered{}, nil
 }
 
 func (local nodesdiscoveredredisdb) DbUpdateSingleKV(uuid string, key string, value string) (error) {
 	return nil
 }
 
-func (local nodesdiscoveredredisdb) redisgetDiscoveredNodesByField(field string, input string) ([]nodesdiscovered.NodesDiscovered, error) {
-		n := []nodesdiscovered.NodesDiscovered{}
+func (local nodesdiscoveredredisdb) redisgetDiscoveredNodesByField(field string, input string) ([]mukluk.NodesDiscovered, error) {
+		n := []mukluk.NodesDiscovered{}
 		conn := local.redispool.Get()
 		defer conn.Close()
 		values, err := redis.Values(conn.Do("SORT", "mssmhpc:mukluk:index:discoverednodes:" + field + ":" + input,

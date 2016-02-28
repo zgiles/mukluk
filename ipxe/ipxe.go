@@ -2,8 +2,7 @@ package ipxe
 
 import (
   "strings"
-
-  "github.com/zgiles/mukluk/stores/oses"
+  "github.com/zgiles/mukluk"
 )
 
 func CleanUUID(i string) (string) {
@@ -20,7 +19,7 @@ func CleanHexHyp(i string) (string) {
   return CleanMac(b)
 }
 
-func OsBoot(o oses.Os, s string) (string) {
+func OsBoot(o mukluk.Os, s string) (string) {
   switch o.Boot_mode {
     case "pxe":
       return pxeLinuxBoot(o, s)
@@ -40,7 +39,7 @@ chain http://` + s + `/api/1/node/uuid/${uuid}/ipxe
   return r
 }
 
-func pxeLinuxBoot(o oses.Os, s string) (string) {
+func pxeLinuxBoot(o mukluk.Os, s string) (string) {
   r := `#!ipxe
 echo generateSimpleLinuxNetBoot running...
 initrd ` + o.Boot_initrd + `
