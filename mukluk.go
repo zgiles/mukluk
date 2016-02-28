@@ -23,9 +23,10 @@ import (
 )
 
 type appContext struct {
-	nodestore            nodes.NodeStore
-	nodesdiscoveredstore nodesdiscovered.NodesDiscoveredStore
-	osstore              oses.OsStore
+	nodestore            	nodes.NodeStore
+	nodesdiscoveredstore 	nodesdiscovered.NodesDiscoveredStore
+	osstore             	oses.OsStore
+	ipxeconfig            ipxeconfig
 }
 
 func main() {
@@ -109,7 +110,7 @@ func main() {
 	}
 
 	// app context
-	appC := appContext{nodestore: nodestore, nodesdiscoveredstore: nodesdiscoveredstore, osstore: osstore}
+	appC := appContext{ nodestore: nodestore, nodesdiscoveredstore: nodesdiscoveredstore, osstore: osstore, ipxeconfig: config.Ipxeconfig }
 	log.Println("app ready")
 
 	// common routes

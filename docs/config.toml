@@ -12,3 +12,13 @@ maindb = "mysql"
 ip = ""
 port = 8080
 closetimeout = 5
+
+[ipxeconfig]
+discoverandinsert = "localboot"
+discoverandinsertfail = "noopstring"
+discoverandcount = "localboot"
+discoverandcountfail = "noopstring"
+discoverfailed = "localboot"
+badkey = "noopstring"
+bootosfail = "noopstring"
+bootosnextstepfail = "noopstring"

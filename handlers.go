@@ -228,7 +228,7 @@ func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
 	_, keyerr := contains(validfields, key)
 	if keyerr != nil {
 		// problem with the request, reply with noop
-		s := ipxe.NoopString(keyerr.Error())
+		s := ipxe.ResponseDecision(ac.ipxeconfig.Badkey, keyerr.Error())
 		ac.textresponse(w, s, http.StatusOK)
 		return
 	}
@@ -241,8 +241,8 @@ func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
 	}
 	o, oe := ac.osstore.SingleNameStep(n.Os_name, strconv.FormatInt(n.Os_step, 10))
 	if oe != nil {
-		// problem with OS, generate noop
-		s := ipxe.NoopString(oe.Error())
+		// problem with OS, do whatever we are supposed to
+		s := ipxe.ResponseDecision(ac.ipxeconfig.Bootosfail, oe.Error())
 		ac.textresponse(w, s, http.StatusOK)
 		return
 	}
@@ -251,8 +251,8 @@ func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
 	// if all successful, change to next os step
 	ue := ac.nodestore.UpdateOsStep(n.Uuid, o.Next_step)
 	if ue != nil {
-		// problem with OS, generate noop
-		s := ipxe.NoopString(ue.Error())
+		// problem with OS, do whatever we are supposed to
+		s := ipxe.ResponseDecision(ac.ipxeconfig.Bootosnextstepfail, oe.Error())
 		ac.textresponse(w, s, http.StatusOK)
 		return
 	}
@@ -271,22 +271,30 @@ func (ac appContext) httpipxediscover(w http.ResponseWriter, r *http.Request) {
 		// if it is found, update the count
 		_, ce := ac.nodesdiscoveredstore.UpdateCount(uuid)
 		if ce != nil {
-			// if updating the count didnt work, something else is wrong
-			s := ipxe.NoopString(ce.Error())
+			// if updating the count didnt work, something else is wrong, return what we are supposed to
+			s := ipxe.ResponseDecision(ac.ipxeconfig.Discoverandcountfail, ce.Error())
 			ac.textresponse(w, s, http.StatusOK)
 			return
 		}
+		// success, go whatever we do on success
+		s := ipxe.ResponseDecision(ac.ipxeconfig.Discoverandcount, "")
+		ac.textresponse(w, s, http.StatusOK)
+		return
 	} else {
 		// if not found, make it
 		_, oe := ac.nodesdiscoveredstore.CreateAndInsert(uuid, ipv4address, macaddress)
 		if oe != nil {
-			// error making it, noop the node
-			s := ipxe.NoopString(oe.Error())
+			// error making it, do whatever we do on errors the node
+			s := ipxe.ResponseDecision(ac.ipxeconfig.Discoverandinsertfail, oe.Error())
 			ac.textresponse(w, s, http.StatusOK)
 			return
 		}
+		// success, go whatever we do on success
+		s := ipxe.ResponseDecision(ac.ipxeconfig.Discoverandinsert, "")
+		ac.textresponse(w, s, http.StatusOK)
+		return
 	}
-	// if no errors, boot locally
-	s := ipxe.Localboot()
+	// somehow we go to here, it's a bigger problem
+	s := ipxe.ResponseDecision(ac.ipxeconfig.Discoverfailed, "")
 	ac.textresponse(w, s, http.StatusOK)
 }

@@ -122,3 +122,21 @@ exit
 `
   return r
 }
+
+
+func ResponseDecision(action string, s string) (string) {
+  switch action {
+    case "noop":
+      return Noop()
+    case "noopstring":
+      return NoopString(s)
+    case "holdandwait":
+      return holdandwait(s)
+    case "uuidboot":
+      return UuidBoot(s)
+    case "localboot":
+      return Localboot()
+    default:
+      return NoopString("ipxe.ResponseDecision switch defaulted")
+  }
+}

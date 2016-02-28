@@ -22,10 +22,22 @@ type serverconfig struct {
 	Closetimeout int64
 }
 
+type ipxeconfig struct {
+	Discoverandinsert     string
+	Discoverandinsertfail string
+	Discoverandcount      string
+	Discoverandcountfail  string
+	Discoverfailed        string
+	Badkey                string
+	Bootosfail            string
+	Bootosnextstepfail    string
+}
+
 type config struct {
 	Mysqlconfig  mysqlconfig
 	Redisconfig  redisconfig
 	Serverconfig serverconfig
+	Ipxeconfig	ipxeconfig
 }
 
 func loadConfig(file string) (*config, error) {
