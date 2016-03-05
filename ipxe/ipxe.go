@@ -10,7 +10,7 @@ func CleanUUID(i string) (string) {
 }
 
 func CleanMac(i string) (string) {
-  return strings.ToUpper(i)
+  return strings.ToLower(i)
 }
 
 func CleanHexHyp(i string) (string) {
@@ -27,6 +27,28 @@ func OsBoot(o mukluk.Os, s string) (string) {
       return Localboot()
     case "holdandwait":
       return holdandwait(s)
+    default:
+      return Noop()
+  }
+}
+
+func IdBoot(method string, s string ) (string) {
+  switch method {
+    case "uuid":
+      r := `#!ipxe
+chain http://` + s + `/api/1/node/uuid/${uuid}/ipxe
+`
+      return r
+    case "mac":
+      r := `#!ipxe
+chain http://` + s + `/api/1/node/macaddress/${mac:hexhyp}/ipxe
+`
+      return r
+    case "muid":
+      r := `#!ipxe
+chain http://` + s + `/api/1/node/muid/${uuid}${mac:hexhyp}${ip}/ipxe
+`
+      return r
     default:
       return Noop()
   }

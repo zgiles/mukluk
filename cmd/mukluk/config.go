@@ -31,6 +31,7 @@ type ipxeconfig struct {
 	Badkey                string
 	Bootosfail            string
 	Bootosnextstepfail    string
+	BootIDMethod					string
 }
 
 type config struct {

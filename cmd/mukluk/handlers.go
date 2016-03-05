@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/zgiles/mukluk"
 	"github.com/zgiles/mukluk/ipxe"
 
 	"github.com/gorilla/context"
@@ -58,6 +59,14 @@ func (ac appContext) objectandfieldtotextresponse(w http.ResponseWriter, o inter
 	ac.textresponse(w, m, http.StatusOK)
 }
 
+func (ac appContext) objecttextresponse(w http.ResponseWriter, o string, e []error) {
+	if errorinslice(e) {
+		ac.errorresponse(w, http.StatusBadRequest)
+		return
+	}
+	ac.textresponse(w, o, http.StatusOK)
+}
+
 // HANDLERS
 
 func errorHandler(w http.ResponseWriter, r *http.Request) {
@@ -84,16 +93,31 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
-	validfields := []string{"uuid", "hostname", "ipv4address", "macaddress"}
+	validfields := []string{"uuid", "hostname", "ipv4address", "macaddress", "muid"}
 	key := params.ByName("nodekey")
-	keyvalue := params.ByName("nodekeyvalue")
 	field := params.ByName("field")
 	_, keyerr := contains(validfields, key)
-	o, oe := ac.nodestore.SingleKV(key, keyvalue)
-	if field == "" {
-		ac.objectmarshaltojsonresponse(w, o, []error{keyerr, oe})
-	} else {
-		ac.objectandfieldtotextresponse(w, o, field, []error{keyerr, oe})
+	var muid string
+	switch key {
+		case "muid":
+			muid = params.ByName("nodekeyvalue")
+		case "macaddress":
+			keyvalue := ipxe.CleanHexHyp(params.ByName("nodekeyvalue"))
+			muid, _ = ac.nodestore.KVtoMUID(key, keyvalue)
+		default:
+			keyvalue := params.ByName("nodekeyvalue")
+			muid, _ = ac.nodestore.KVtoMUID(key, keyvalue)
+	}
+	o, oe := ac.nodestore.MUID(muid)
+	switch true {
+	  case field == "":
+			ac.objectmarshaltojsonresponse(w, o, []error{keyerr, oe})
+		case field == "muid":
+			ac.objecttextresponse(w, muid, []error{keyerr, oe})
+		case keyerr == nil:
+			ac.objectandfieldtotextresponse(w, o, field, []error{keyerr, oe})
+		default:
+			ac.errorresponse(w, http.StatusBadRequest)
 	}
 }
 
@@ -113,12 +137,22 @@ func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Re
 func (ac appContext) httpGetNodesByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
-	validfields := []string{"uuid", "hostname", "ipv4address", "macaddress", "os_name", "os_step", "node_type", "oob_type"}
+	// validfields := []string{"uuid", "hostname", "ipv4address", "macaddress", "os_name", "os_step", "node_type", "oob_type"}
 	key := params.ByName("nodekey")
-	keyvalue := params.ByName("nodekeyvalue")
-	_, keyerr := contains(validfields, key)
-	o, oe := ac.nodestore.MultiKV(key, keyvalue)
-	ac.objectmarshaltojsonresponse(w, o, []error{keyerr, oe})
+	var muid []string
+	var muiderr error
+	switch key {
+		case "muid":
+			muid = append(muid, params.ByName("nodekeyvalue"))
+		case "macaddress":
+			keyvalue := ipxe.CleanHexHyp(params.ByName("nodekeyvalue"))
+			muid, muiderr = ac.nodestore.KVtoMUIDs(key, keyvalue)
+		default:
+			keyvalue := params.ByName("nodekeyvalue")
+			muid, muiderr = ac.nodestore.KVtoMUIDs(key, keyvalue)
+	}
+	o, oe := ac.nodestore.MUIDs(muid)
+	ac.objectmarshaltojsonresponse(w, o, []error{oe, muiderr})
 }
 
 func (ac appContext) httpGetNodeByMyIP(w http.ResponseWriter, r *http.Request) {
@@ -129,14 +163,19 @@ func (ac appContext) httpGetNodeByMyIP(w http.ResponseWriter, r *http.Request) {
 	if iperr != nil {
 		ac.errorresponse(w, http.StatusBadRequest)
 	}
-	o, oe := ac.nodestore.SingleKV("ipv4address", ipv4address)
-	if field == "" {
-		ac.objectmarshaltojsonresponse(w, o, []error{iperr, oe})
-	} else {
-		ac.objectandfieldtotextresponse(w, o, field, []error{iperr, oe})
+	muid, muiderr := ac.nodestore.KVtoMUID("ipv4address", ipv4address)
+	o, oe := ac.nodestore.MUID(muid)
+	switch true {
+		case field == "":
+			ac.objectmarshaltojsonresponse(w, o, []error{iperr, muiderr, oe})
+		case field == "muid":
+			ac.objecttextresponse(w, muid, []error{iperr, muiderr, oe})
+		case iperr == nil:
+			ac.objectandfieldtotextresponse(w, o, field, []error{iperr, muiderr, oe})
+		default:
+			ac.errorresponse(w, http.StatusBadRequest)
 	}
 }
-
 func (ac appContext) httpOsNodeByMyIP(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
@@ -145,40 +184,65 @@ func (ac appContext) httpOsNodeByMyIP(w http.ResponseWriter, r *http.Request) {
 	if iperr != nil {
 		ac.errorresponse(w, http.StatusBadRequest)
 	}
-	n, ne := ac.nodestore.SingleKV("ipv4address", ipv4address)
+	muid, muiderr := ac.nodestore.KVtoMUID("ipv4address", ipv4address)
+	n, ne := ac.nodestore.MUID(muid)
 	o, oe := ac.osstore.SingleNameStep(n.Os_name, strconv.FormatInt(n.Os_step, 10))
 	if field == "" {
-		ac.objectmarshaltojsonresponse(w, o, []error{iperr, ne, oe})
+		ac.objectmarshaltojsonresponse(w, o, []error{iperr, muiderr, ne, oe})
 	} else {
-		ac.objectandfieldtotextresponse(w, o, field, []error{iperr, ne, oe})
+		ac.objectandfieldtotextresponse(w, o, field, []error{iperr, muiderr, ne, oe})
 	}
 }
-
 func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
-	validfields := []string{"uuid", "hostname", "ipv4address", "macaddress"}
+	validfields := []string{"uuid", "hostname", "ipv4address", "macaddress", "muid"}
 	key := params.ByName("nodekey")
-	keyvalue := params.ByName("nodekeyvalue")
 	field := params.ByName("field")
 	_, keyerr := contains(validfields, key)
-	o, oe := ac.nodesdiscoveredstore.SingleKV(key, keyvalue)
-	if field == "" {
-		ac.objectmarshaltojsonresponse(w, o, []error{keyerr, oe})
-	} else {
-		ac.objectandfieldtotextresponse(w, o, field, []error{keyerr, oe})
+	var muid string
+	switch key {
+		case "muid":
+			muid = params.ByName("nodekeyvalue")
+		case "macaddress":
+			keyvalue := ipxe.CleanHexHyp(params.ByName("nodekeyvalue"))
+			muid, _ = ac.nodesdiscoveredstore.KVtoMUID(key, keyvalue)
+		default:
+			keyvalue := params.ByName("nodekeyvalue")
+			muid, _ = ac.nodesdiscoveredstore.KVtoMUID(key, keyvalue)
+	}
+	o, oe := ac.nodesdiscoveredstore.MUID(muid)
+	switch true {
+	  case field == "":
+			ac.objectmarshaltojsonresponse(w, o, []error{keyerr, oe})
+		case field == "muid":
+			ac.objecttextresponse(w, muid, []error{keyerr, oe})
+		case keyerr == nil:
+			ac.objectandfieldtotextresponse(w, o, field, []error{keyerr, oe})
+		default:
+			// field has something valid, maybe merge "contains" here and use default for error
+			// ac.objectandfieldtotextresponse(w, o, field, []error{keyerr, oe})
+			ac.errorresponse(w, http.StatusBadRequest)
 	}
 }
-
 func (ac appContext) httpGetDiscoveredNodesByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
-	validfields := []string{"uuid", "hostname", "ipv4address", "macaddress", "surpressed", "enrolled"}
 	key := params.ByName("nodekey")
-	keyvalue := params.ByName("nodekeyvalue")
-	_, keyerr := contains(validfields, key)
-	o, oe := ac.nodesdiscoveredstore.MultiKV(key, keyvalue)
-	ac.objectmarshaltojsonresponse(w, o, []error{keyerr, oe})
+	var muid []string
+	var muiderr error
+	switch key {
+		case "muid":
+			muid = append(muid, params.ByName("nodekeyvalue"))
+		case "macaddress":
+			keyvalue := ipxe.CleanHexHyp(params.ByName("nodekeyvalue"))
+			muid, muiderr = ac.nodesdiscoveredstore.KVtoMUIDs(key, keyvalue)
+		default:
+			keyvalue := params.ByName("nodekeyvalue")
+			muid, muiderr = ac.nodesdiscoveredstore.KVtoMUIDs(key, keyvalue)
+	}
+	o, oe := ac.nodesdiscoveredstore.MUIDs(muid)
+	ac.objectmarshaltojsonresponse(w, o, []error{oe, muiderr})
 }
 
 func (ac appContext) httpGetDiscoveredNodeByMyIP(w http.ResponseWriter, r *http.Request) {
@@ -189,11 +253,17 @@ func (ac appContext) httpGetDiscoveredNodeByMyIP(w http.ResponseWriter, r *http.
 	if iperr != nil {
 		ac.errorresponse(w, http.StatusBadRequest)
 	}
-	o, oe := ac.nodesdiscoveredstore.SingleKV("ipv4address", ipv4address)
-	if field == "" {
-		ac.objectmarshaltojsonresponse(w, o, []error{iperr, oe})
-	} else {
-		ac.objectandfieldtotextresponse(w, o, field, []error{iperr, oe})
+	muid, muiderr := ac.nodesdiscoveredstore.KVtoMUID("ipv4address", ipv4address)
+	o, oe := ac.nodesdiscoveredstore.MUID(muid)
+	switch true {
+		case field == "":
+			ac.objectmarshaltojsonresponse(w, o, []error{iperr, muiderr, oe})
+		case field == "muid":
+			ac.objecttextresponse(w, muid, []error{iperr, muiderr, oe})
+		case oe == nil:
+			ac.objectandfieldtotextresponse(w, o, field, []error{iperr, muiderr, oe})
+		default:
+			ac.errorresponse(w, http.StatusBadRequest)
 	}
 }
 
@@ -216,15 +286,14 @@ func (ac appContext) httpGetOsByNameAndStepHandler(w http.ResponseWriter, r *htt
 }
 
 func (ac appContext) httpipxechain(w http.ResponseWriter, r *http.Request) {
-	s := ipxe.UuidBoot(r.Host)
+	s := ipxe.IdBoot(ac.ipxeconfig.BootIDMethod, r.Host)
 	ac.textresponse(w, s, http.StatusOK)
 }
 
 func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
 	params := context.Get(r, "params").(httprouter.Params)
-	validfields := []string{"uuid", "hostname", "ipv4address", "macaddress"}
+	validfields := []string{"uuid", "hostname", "ipv4address", "macaddress", "muid"}
 	key := params.ByName("nodekey")
-	keyvalue := params.ByName("nodekeyvalue")
 	_, keyerr := contains(validfields, key)
 	if keyerr != nil {
 		// problem with the request, reply with noop
@@ -232,7 +301,18 @@ func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
 		ac.textresponse(w, s, http.StatusOK)
 		return
 	}
-	n, ne := ac.nodestore.SingleKV(key, keyvalue)
+	var muid string
+	switch key {
+		case "muid":
+			muid = params.ByName("nodekeyvalue")
+		case "macaddress":
+			keyvalue := ipxe.CleanHexHyp(params.ByName("nodekeyvalue"))
+			muid, _ = ac.nodestore.KVtoMUID(key, keyvalue)
+		default:
+			keyvalue := params.ByName("nodekeyvalue")
+			muid, _ = ac.nodestore.KVtoMUID(key, keyvalue)
+	}
+	n, ne := ac.nodestore.MUID(muid)
 	if ne != nil {
 		// node not found. Generate enrollment
 		s := ipxe.Enrollmentboot(r.Host)
@@ -249,7 +329,7 @@ func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
 	// should be able to generate an ipxe from the OS, it will noop if not functioning
 	s := ipxe.OsBoot(o, r.Host)
 	// if all successful, change to next os step
-	ue := ac.nodestore.UpdateOsStep(n.Uuid, o.Next_step)
+	ue := ac.nodestore.UpdateOsStep(n.MUID(), o.Next_step)
 	if ue != nil {
 		// problem with OS, do whatever we are supposed to
 		s := ipxe.ResponseDecision(ac.ipxeconfig.Bootosnextstepfail, oe.Error())
@@ -266,10 +346,12 @@ func (ac appContext) httpipxediscover(w http.ResponseWriter, r *http.Request) {
 	ipv4address := params.ByName("ipv4address")
 	macaddress := ipxe.CleanHexHyp(params.ByName("macaddress"))
 
-	_, luerr := ac.nodesdiscoveredstore.SingleKV("uuid", uuid)
+	muid := mukluk.MUID(uuid, macaddress, ipv4address)
+
+	_, luerr := ac.nodesdiscoveredstore.MUID(muid)
 	if luerr == nil {
 		// if it is found, update the count
-		_, ce := ac.nodesdiscoveredstore.UpdateCount(uuid)
+		_, ce := ac.nodesdiscoveredstore.UpdateCount(muid)
 		if ce != nil {
 			// if updating the count didnt work, something else is wrong, return what we are supposed to
 			s := ipxe.ResponseDecision(ac.ipxeconfig.Discoverandcountfail, ce.Error())

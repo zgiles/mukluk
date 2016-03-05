@@ -26,6 +26,10 @@ func (local nodesdiscoveredredisdb) DbMultiKV(field string, input string) ([]muk
 	return local.redisgetDiscoveredNodesByField(field, input)
 }
 
+func (local nodesdiscoveredredisdb) MUID(muid string) (mukluk.NodesDiscovered, error) {
+	return mukluk.NodesDiscovered{}, nil
+}
+
 func (local nodesdiscoveredredisdb) DbInsert(nd mukluk.NodesDiscovered) (mukluk.NodesDiscovered, error) {
 	return mukluk.NodesDiscovered{}, nil
 }

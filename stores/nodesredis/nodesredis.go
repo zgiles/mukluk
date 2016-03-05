@@ -26,6 +26,11 @@ func (nrdb nodesredisdb) DbMultiKV(field string, input string) ([]mukluk.Node, e
 	return nrdb.redisgetNodesByField(field, input)
 }
 
+func (local nodesredisdb) MUID(muid string) (mukluk.Node, error) {
+	n := mukluk.Node{}
+	return n, nil
+}
+
 func (nrdb nodesredisdb) DbUpdateSingleKV(uuid string, key string, value string) (error) {
 	return nil
 }

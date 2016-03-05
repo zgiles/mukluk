@@ -17,9 +17,9 @@ import (
 	"github.com/zgiles/mukluk/nodesdiscoveredstore"
 
 	"github.com/zgiles/mukluk/stores/nodesdiscoveredmysql"
-	"github.com/zgiles/mukluk/stores/nodesdiscoveredredis"
+	// "github.com/zgiles/mukluk/stores/nodesdiscoveredredis"
 	"github.com/zgiles/mukluk/stores/nodesmysql"
-	"github.com/zgiles/mukluk/stores/nodesredis"
+	// "github.com/zgiles/mukluk/stores/nodesredis"
 	"github.com/zgiles/mukluk/stores/osesmysql"
 )
 
@@ -80,7 +80,7 @@ func main() {
 		l_osstoredb = osesmysql.New(mysqlpool)
 		log.Println("mysql: opening OsStore")
 		l_osstore = osstore.New(l_osstoredb)
-
+/*
 	case "redis":
 		if config.Redisconfig.Enabled == false {
 			log.Fatal("redis selected, but not enabled")
@@ -104,7 +104,7 @@ func main() {
 		l_nodesdiscoveredstoredb = nodesdiscoveredredis.New(redispool)
 		log.Println("redis: opening NodesDiscoveredStore")
 		l_nodesdiscoveredstore = nodesdiscoveredstore.New(l_nodesdiscoveredstoredb)
-
+*/
 	default:
 		log.Fatal("no valid db selected as primary")
 
@@ -125,21 +125,28 @@ func main() {
 	router.GET("/", wrapHandler(commonHandlers.ThenFunc(indexHandler)))
 	router.GET("/api/1/node/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByFieldHandler)))
 	router.GET("/api/1/node/:nodekey/:nodekeyvalue/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByFieldHandler)))
+	router.GET("/api/1/node/:nodekey/:nodekeyvalue/ipxe", wrapHandler(commonHandlers.ThenFunc(appC.httpipxeNode)))
+
 	router.GET("/api/1/nodes/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodesByFieldHandler)))
+
+	router.GET("/api/1/discover/uuid/:uuid/ipv4address/:ipv4address/macaddress/:macaddress", wrapHandler(commonHandlers.ThenFunc(appC.httpipxediscover)))
+
 	router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByFieldHandler)))
 	router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByFieldHandler)))
+
 	router.GET("/api/1/discoverednodes/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodesByFieldHandler)))
+
 	router.GET("/api/1/me/node", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByMyIP)))
 	router.GET("/api/1/me/node/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByMyIP)))
 	router.GET("/api/1/me/discoverednode", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByMyIP)))
 	router.GET("/api/1/me/discoverednode/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByMyIP)))
-	router.GET("/api/1/os/:os_name/step/:os_step", wrapHandler(commonHandlers.ThenFunc(appC.httpGetOsByNameAndStepHandler)))
-	router.GET("/api/1/os/:os_name/step/:os_step/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetOsByNameAndStepHandler)))
 	router.GET("/api/1/me/os", wrapHandler(commonHandlers.ThenFunc(appC.httpOsNodeByMyIP)))
 	router.GET("/api/1/me/os/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpOsNodeByMyIP)))
+
+	router.GET("/api/1/os/:os_name/step/:os_step", wrapHandler(commonHandlers.ThenFunc(appC.httpGetOsByNameAndStepHandler)))
+	router.GET("/api/1/os/:os_name/step/:os_step/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetOsByNameAndStepHandler)))
+
 	router.GET("/api/1/ipxe/chain1", wrapHandler(commonHandlers.ThenFunc(appC.httpipxechain)))
-	router.GET("/api/1/node/:nodekey/:nodekeyvalue/ipxe", wrapHandler(commonHandlers.ThenFunc(appC.httpipxeNode)))
-	router.GET("/api/1/discover/uuid/:uuid/ipv4address/:ipv4address/macaddress/:macaddress", wrapHandler(commonHandlers.ThenFunc(appC.httpipxediscover)))
 
   router.NotFound = commonHandlers.ThenFunc(errorHandler)
 
