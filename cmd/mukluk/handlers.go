@@ -18,18 +18,6 @@ func (ac appContext) mymuidbyip(rawip string) (string, error) {
 	return ac.nodestore.KVtoMUID("ipv4address", ip)
 }
 
-// httpGetNodeByFieldHandler
-// Goal: As an HTTP Handler, take a URL via the Request and Params and go lookup the node which matches it
-// additionally, make sure the URL is matching on of the chosen unique field names
-// Assumptions:
-// * Assuming the HTTPRouter is correctly filling in the nodekey
-// * Assuming two variables are given via the Params
-// Issues:
-// * "contains" function needs work
-// * fields are hardcoded
-// * A not found node will return an empty object. We don't error to the client
-// How: The nodekey is checked against validfields. If it is not contained with in the slice, an error is returned. If it is contained,
-// we call the queryGetNodeByField function with the two fields. Lastly, we marshal the data into a json output via the type Node.
 func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
@@ -43,19 +31,6 @@ func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Re
 	switchresponsefieldornot(w, o, field, []error{oe, muiderr})
 }
 
-// httpGetNodesByFieldHandler
-// Goal: As an HTTP Handler, take a URL via the Request and Params and go lookup the nodes which matches it
-// additionally, make sure the URL is matching on of the chosen unique field names (not yet). Then return a slice of nodes
-// that match that need
-// Assumptions:
-// * Assuming the HTTPRouter is correctly filling in the nodekey
-// * Assuming two variables are given via the Params
-// Issues:
-// * "contains" function needs work
-// * fields are hardcoded
-// * A not found node will return an empty object. We don't error to the client
-// How: The nodekey is checked against validfields. If it is not contained with in the slice, an error is returned. If it is contained,
-// we call the queryGetNodesByField function with the two fields. Lastly, we marshal the data into a json output via the type Node.
 func (ac appContext) httpGetNodesByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)

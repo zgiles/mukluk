@@ -54,6 +54,7 @@ Optionally make some type of startup script. ( or wait until I do it.. see TODOs
 * dependency versioning
 
 ## Release History
+* 0.1.2 - switched everything to MUID for nodes with no UUID, but still need uniqueness. tons of code cleanup. broke out common handlers and code-wide utils. removed old double function DB calls. removed tons of dead code.
 * 0.1.1 - make action on failure an option through config
 * 0.1.0 - Initial release
 
