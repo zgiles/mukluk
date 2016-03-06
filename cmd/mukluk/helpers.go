@@ -72,3 +72,14 @@ func errorHandler(w http.ResponseWriter, r *http.Request) {
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("This is the API URL. Please read the docs (if they exist)."))
 }
+
+func switchresponsefieldornot(w http.ResponseWriter, o interface{}, muid string, field string, e []error) {
+	switch {
+		case field == "":
+			objectmarshaltojsonresponse(w, o, e)
+		case field == "muid":
+			objecttextresponse(w, muid, e)
+		default:
+			objectandfieldtotextresponse(w, o, field, e)
+	}
+}

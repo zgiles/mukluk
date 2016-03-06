@@ -40,14 +40,7 @@ func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Re
 	muid, muiderr := ac.nodestore.KVtoMUID(key, value)
 	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodestore.MUID(muid)
-	switch {
-	  case field == "":
-			objectmarshaltojsonresponse(w, o, []error{oe, muiderr})
-		case field == "muid":
-			objecttextresponse(w, muid, []error{oe, muiderr})
-		default:
-			objectandfieldtotextresponse(w, o, field, []error{oe, muiderr})
-	}
+	switchresponsefieldornot(w, o, muid, field, []error{oe, muiderr})
 }
 
 // httpGetNodesByFieldHandler
@@ -73,7 +66,7 @@ func (ac appContext) httpGetNodesByFieldHandler(w http.ResponseWriter, r *http.R
 	muid, muiderr := ac.nodestore.KVtoMUIDs(key, value)
 	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodestore.MUIDs(muid)
-	objectmarshaltojsonresponse(w, o, []error{oe, muiderr})
+	switchresponsefieldornot(w, o, "", "", []error{oe, muiderr})
 }
 
 func (ac appContext) httpGetNodeByMyIP(w http.ResponseWriter, r *http.Request) {
@@ -83,16 +76,7 @@ func (ac appContext) httpGetNodeByMyIP(w http.ResponseWriter, r *http.Request) {
 	muid, muiderr := ac.mymuidbyip(r.RemoteAddr)
 	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodestore.MUID(muid)
-	switch true {
-		case field == "":
-			objectmarshaltojsonresponse(w, o, []error{muiderr, oe})
-		case field == "muid":
-			objecttextresponse(w, muid, []error{muiderr, oe})
-		case muiderr == nil:
-			objectandfieldtotextresponse(w, o, field, []error{muiderr, oe})
-		default:
-			errorresponse(w, http.StatusBadRequest)
-	}
+	switchresponsefieldornot(w, o, muid, field, []error{oe, muiderr})
 }
 
 func (ac appContext) httpOsNodeByMyIP(w http.ResponseWriter, r *http.Request) {
@@ -104,11 +88,7 @@ func (ac appContext) httpOsNodeByMyIP(w http.ResponseWriter, r *http.Request) {
 	n, ne := ac.nodestore.MUID(muid)
 	if ne != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.osstore.SingleNameStep(n.Os_name, strconv.FormatInt(n.Os_step, 10))
-	if field == "" {
-		objectmarshaltojsonresponse(w, o, []error{muiderr, ne, oe})
-	} else {
-		objectandfieldtotextresponse(w, o, field, []error{muiderr, ne, oe})
-	}
+	switchresponsefieldornot(w, o, "", field, []error{oe, ne, muiderr})
 }
 
 func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, r *http.Request) {
@@ -121,15 +101,9 @@ func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, 
 	muid, muiderr := ac.nodesdiscoveredstore.KVtoMUID(key, value)
 	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodesdiscoveredstore.MUID(muid)
-	switch true {
-	  case field == "":
-			objectmarshaltojsonresponse(w, o, []error{muiderr, oe})
-		case field == "muid":
-			objecttextresponse(w, muid, []error{muiderr, oe})
-		default:
-			objectandfieldtotextresponse(w, o, field, []error{muiderr, oe})
-	}
+	switchresponsefieldornot(w, o, muid, field, []error{oe, muiderr})
 }
+
 func (ac appContext) httpGetDiscoveredNodesByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
@@ -139,7 +113,7 @@ func (ac appContext) httpGetDiscoveredNodesByFieldHandler(w http.ResponseWriter,
 	muid, muiderr := ac.nodesdiscoveredstore.KVtoMUIDs(key, value)
 	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodesdiscoveredstore.MUIDs(muid)
-	objectmarshaltojsonresponse(w, o, []error{oe, muiderr})
+	switchresponsefieldornot(w, o, "", "", []error{oe, muiderr})
 }
 
 func (ac appContext) httpGetDiscoveredNodeByMyIP(w http.ResponseWriter, r *http.Request) {
@@ -153,16 +127,7 @@ func (ac appContext) httpGetDiscoveredNodeByMyIP(w http.ResponseWriter, r *http.
 	muid, muiderr := ac.nodesdiscoveredstore.KVtoMUID("ipv4address", ipv4address)
 	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodesdiscoveredstore.MUID(muid)
-	switch true {
-		case field == "":
-			objectmarshaltojsonresponse(w, o, []error{iperr, muiderr, oe})
-		case field == "muid":
-			objecttextresponse(w, muid, []error{iperr, muiderr, oe})
-		case oe == nil:
-			objectandfieldtotextresponse(w, o, field, []error{iperr, muiderr, oe})
-		default:
-			errorresponse(w, http.StatusBadRequest)
-	}
+	switchresponsefieldornot(w, o, "", field, []error{iperr, oe, muiderr})
 }
 
 // httpGetOsByNameAndStepHandler
@@ -174,13 +139,8 @@ func (ac appContext) httpGetOsByNameAndStepHandler(w http.ResponseWriter, r *htt
 	os_step := params.ByName("os_step")
 	field := params.ByName("field")
 	// _, keyerr := contains(validfields, key)
-	var keyerr error = nil
 	o, oe := ac.osstore.SingleNameStep(os_name, os_step)
-	if field == "" {
-		objectmarshaltojsonresponse(w, o, []error{keyerr, oe})
-	} else {
-		objectandfieldtotextresponse(w, o, field, []error{keyerr, oe})
-	}
+	switchresponsefieldornot(w, o, "", field, []error{oe})
 }
 
 func (ac appContext) httpipxechain(w http.ResponseWriter, r *http.Request) {
