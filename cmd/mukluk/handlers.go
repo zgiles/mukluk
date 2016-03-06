@@ -40,7 +40,7 @@ func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Re
 	muid, muiderr := ac.nodestore.KVtoMUID(key, value)
 	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodestore.MUID(muid)
-	switchresponsefieldornot(w, o, muid, field, []error{oe, muiderr})
+	switchresponsefieldornot(w, o, field, []error{oe, muiderr})
 }
 
 // httpGetNodesByFieldHandler
@@ -65,7 +65,7 @@ func (ac appContext) httpGetNodesByFieldHandler(w http.ResponseWriter, r *http.R
 	muid, muiderr := ac.nodestore.KVtoMUIDs(key, value)
 	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodestore.MUIDs(muid)
-	switchresponsefieldornot(w, o, "", "", []error{oe, muiderr})
+	switchresponsefieldornot(w, o, "", []error{oe, muiderr})
 }
 
 func (ac appContext) httpGetNodeByMyIP(w http.ResponseWriter, r *http.Request) {
@@ -75,7 +75,7 @@ func (ac appContext) httpGetNodeByMyIP(w http.ResponseWriter, r *http.Request) {
 	muid, muiderr := ac.mymuidbyip(r.RemoteAddr)
 	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodestore.MUID(muid)
-	switchresponsefieldornot(w, o, muid, field, []error{oe, muiderr})
+	switchresponsefieldornot(w, o, field, []error{oe, muiderr})
 }
 
 func (ac appContext) httpOsNodeByMyIP(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +87,7 @@ func (ac appContext) httpOsNodeByMyIP(w http.ResponseWriter, r *http.Request) {
 	n, ne := ac.nodestore.MUID(muid)
 	if ne != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.osstore.SingleNameStep(n.Os_name, strconv.FormatInt(n.Os_step, 10))
-	switchresponsefieldornot(w, o, "", field, []error{oe, ne, muiderr})
+	switchresponsefieldornot(w, o, field, []error{oe, ne, muiderr})
 }
 
 func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +100,7 @@ func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, 
 	muid, muiderr := ac.nodesdiscoveredstore.KVtoMUID(key, value)
 	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodesdiscoveredstore.MUID(muid)
-	switchresponsefieldornot(w, o, muid, field, []error{oe, muiderr})
+	switchresponsefieldornot(w, o, field, []error{oe, muiderr})
 }
 
 func (ac appContext) httpGetDiscoveredNodesByFieldHandler(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +112,7 @@ func (ac appContext) httpGetDiscoveredNodesByFieldHandler(w http.ResponseWriter,
 	muid, muiderr := ac.nodesdiscoveredstore.KVtoMUIDs(key, value)
 	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodesdiscoveredstore.MUIDs(muid)
-	switchresponsefieldornot(w, o, "", "", []error{oe, muiderr})
+	switchresponsefieldornot(w, o, "", []error{oe, muiderr})
 }
 
 func (ac appContext) httpGetDiscoveredNodeByMyIP(w http.ResponseWriter, r *http.Request) {
@@ -126,7 +126,7 @@ func (ac appContext) httpGetDiscoveredNodeByMyIP(w http.ResponseWriter, r *http.
 	muid, muiderr := ac.nodesdiscoveredstore.KVtoMUID("ipv4address", ipv4address)
 	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodesdiscoveredstore.MUID(muid)
-	switchresponsefieldornot(w, o, "", field, []error{iperr, oe, muiderr})
+	switchresponsefieldornot(w, o, field, []error{iperr, oe, muiderr})
 }
 
 // httpGetOsByNameAndStepHandler
@@ -137,7 +137,7 @@ func (ac appContext) httpGetOsByNameAndStepHandler(w http.ResponseWriter, r *htt
 	os_step := params.ByName("os_step")
 	field := params.ByName("field")
 	o, oe := ac.osstore.SingleNameStep(os_name, os_step)
-	switchresponsefieldornot(w, o, "", field, []error{oe})
+	switchresponsefieldornot(w, o, field, []error{oe})
 }
 
 func (ac appContext) httpipxechain(w http.ResponseWriter, r *http.Request) {

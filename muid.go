@@ -4,6 +4,10 @@ import (
   "strings"
 )
 
+type MUIDable interface {
+  MUID() (string)
+}
+
 func MUID(uuid string, macaddress string, ip string) string {
 	return muiduuid(uuid) + macaddress + muidip(ip)
 }

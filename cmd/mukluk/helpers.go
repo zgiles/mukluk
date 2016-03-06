@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"github.com/zgiles/mukluk"
 	"github.com/zgiles/mukluk/helpers"
 )
 
@@ -45,13 +46,24 @@ func objectandfieldtotextresponse(w http.ResponseWriter, o interface{}, field st
 		errorresponse(w, http.StatusBadRequest)
 		return
 	}
-	m, merr := helpers.ReflectStructByJSONName(o, field)
-	if merr != nil {
-		// like marshall, internal error. missing fields shouldnt get here
-		errorresponse(w, http.StatusInternalServerError)
-		return
+	switch field {
+		case "muid":
+			x, ok := o.(mukluk.MUIDable)
+			if ok {
+				textresponse(w, x.MUID(), http.StatusOK)
+			} else {
+				errorresponse(w, http.StatusBadRequest)
+				return
+			}
+		default:
+			m, merr := helpers.ReflectStructByJSONName(o, field)
+			if merr != nil {
+				// like marshall, internal error. missing fields shouldnt get here
+				errorresponse(w, http.StatusInternalServerError)
+				return
+			}
+			textresponse(w, m, http.StatusOK)
 	}
-	textresponse(w, m, http.StatusOK)
 }
 
 func objecttextresponse(w http.ResponseWriter, o string, e []error) {
@@ -73,12 +85,10 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("This is the API URL. Please read the docs (if they exist)."))
 }
 
-func switchresponsefieldornot(w http.ResponseWriter, o interface{}, muid string, field string, e []error) {
+func switchresponsefieldornot(w http.ResponseWriter, o interface{}, field string, e []error) {
 	switch {
 		case field == "":
 			objectmarshaltojsonresponse(w, o, e)
-		case field == "muid":
-			objecttextresponse(w, muid, e)
 		default:
 			objectandfieldtotextresponse(w, o, field, e)
 	}
