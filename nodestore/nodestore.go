@@ -38,7 +38,6 @@ func (local store) KVtoMUID(key string, value string) (string, error) {
 		default:
 			return local.db.KVtoMUID(key, value)
 	}
-	// return local.db.KVtoMUID(key, value)
 }
 
 func (local store) KVtoMUIDs(key string, value string) ([]string, error) {
@@ -51,7 +50,6 @@ func (local store) KVtoMUIDs(key string, value string) ([]string, error) {
 		default:
 			return local.db.KVtoMUIDs(key, value)
 	}
-	// return local.db.KVtoMUIDs(key, value)
 }
 
 func (local store) MUID(muid string) (mukluk.Node, error) {
