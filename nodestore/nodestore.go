@@ -34,7 +34,7 @@ func (local store) KVtoMUID(key string, value string) (string, error) {
 		case keyerr != nil:
 			return "", keyerr
 	  case key == "muid":
-			return key, nil
+			return value, nil
 		default:
 			return local.db.KVtoMUID(key, value)
 	}
@@ -46,7 +46,7 @@ func (local store) KVtoMUIDs(key string, value string) ([]string, error) {
 		case keyerr != nil:
 			return []string{}, keyerr
 		case key == "muid":
-			return []string{key}, nil
+			return []string{value}, nil
 		default:
 			return local.db.KVtoMUIDs(key, value)
 	}

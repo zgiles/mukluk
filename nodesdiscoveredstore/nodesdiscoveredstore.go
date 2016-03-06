@@ -4,6 +4,7 @@ import (
 	"time"
 	"strconv"
 	"github.com/zgiles/mukluk"
+	"github.com/zgiles/mukluk/helpers"
 )
 
 type StoreI interface {
@@ -39,6 +40,7 @@ type StoreDBI interface {
 
 type store struct {
   db StoreDBI
+	validkeys []string
 }
 
 func Create(uuid string, ipv4address string, macaddress string) (mukluk.NodesDiscovered) {
@@ -64,11 +66,27 @@ func (local store) MultiKV(field string, input string) ([]mukluk.NodesDiscovered
 */
 
 func (local store) KVtoMUID(key string, value string) (string, error) {
-	return local.db.KVtoMUID(key, value)
+	_, keyerr := helpers.Contains(local.validkeys, key)
+	switch {
+		case keyerr != nil:
+			return "", keyerr
+		case key == "muid":
+			return value, nil
+		default:
+			return local.db.KVtoMUID(key, value)
+	}
 }
 
 func (local store) KVtoMUIDs(key string, value string) ([]string, error) {
-	return local.db.KVtoMUIDs(key, value)
+	_, keyerr := helpers.Contains(local.validkeys, key)
+	switch {
+		case keyerr != nil:
+			return []string{}, keyerr
+		case key == "muid":
+			return []string{value}, nil
+		default:
+			return local.db.KVtoMUIDs(key, value)
+	}
 }
 
 func (local store) MUID(muid string) (mukluk.NodesDiscovered, error) {
@@ -123,5 +141,6 @@ func (local store) HeartBeatNode(uuid string) (int, error) {
 */
 
 func New(db1 StoreDBI) StoreI {
-  return &store{db1}
+	validkeys := []string{"uuid", "ipv4address", "macaddress", "muid", "enrolled", "surpressed"}
+  return &store{db1, validkeys}
 }
