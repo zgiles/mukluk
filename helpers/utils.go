@@ -1,4 +1,4 @@
-package main
+package helpers
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func contains(slice []string, item string) (bool, error) {
+func Contains(slice []string, item string) (bool, error) {
 	set := make(map[string]struct{}, len(slice))
 	for _, s := range slice {
 		set[s] = struct{}{}
@@ -21,7 +21,7 @@ func contains(slice []string, item string) (bool, error) {
 	return ok, err
 }
 
-func errorinslice(e []error) bool {
+func Errorinslice(e []error) bool {
 	for _, s := range e {
 		if s != nil {
 			return true
@@ -43,7 +43,7 @@ func errorinslice(e []error) bool {
 // _ = json.Unmarshal(js, &data)
 // s := data[field]
 //
-func reflectStructByJSONName(o interface{}, field string) (string, error) {
+func ReflectStructByJSONName(o interface{}, field string) (string, error) {
 	b := reflect.ValueOf(o)
 	c := b.Type()
 	for i := 0; i < b.NumField(); i++ {

@@ -4,6 +4,7 @@ import (
 	"time"
 	"strconv"
 	"github.com/zgiles/mukluk"
+	"github.com/zgiles/mukluk/helpers"
 )
 
 type StoreI interface {
@@ -24,14 +25,33 @@ type StoreDBI interface {
 
 type store struct {
   db StoreDBI
+	validkeys []string
 }
 
 func (local store) KVtoMUID(key string, value string) (string, error) {
-	return local.db.KVtoMUID(key, value)
+	_, keyerr := helpers.Contains(local.validkeys, key)
+	switch {
+		case keyerr != nil:
+			return "", keyerr
+	  case key == "muid":
+			return key, nil
+		default:
+			return local.db.KVtoMUID(key, value)
+	}
+	// return local.db.KVtoMUID(key, value)
 }
 
 func (local store) KVtoMUIDs(key string, value string) ([]string, error) {
-	return local.db.KVtoMUIDs(key, value)
+	_, keyerr := helpers.Contains(local.validkeys, key)
+	switch {
+		case keyerr != nil:
+			return []string{}, keyerr
+		case key == "muid":
+			return []string{key}, nil
+		default:
+			return local.db.KVtoMUIDs(key, value)
+	}
+	// return local.db.KVtoMUIDs(key, value)
 }
 
 func (local store) MUID(muid string) (mukluk.Node, error) {
@@ -66,5 +86,6 @@ func heartbeatnow() (int64) {
 }
 
 func New(db1 StoreDBI) StoreI {
-  return &store{db1}
+	validkeys := []string{"uuid", "hostname", "ipv4address", "macaddress", "muid"}
+  return &store{db1, validkeys}
 }

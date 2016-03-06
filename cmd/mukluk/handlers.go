@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/zgiles/mukluk"
+	"github.com/zgiles/mukluk/helpers"
 	"github.com/zgiles/mukluk/ipxe"
 
 	"github.com/gorilla/context"
@@ -34,7 +35,7 @@ func (ac appContext) errorresponse(w http.ResponseWriter, status int) {
 }
 
 func (ac appContext) objectmarshaltojsonresponse(w http.ResponseWriter, o interface{}, e []error) {
-	if errorinslice(e) {
+	if helpers.Errorinslice(e) {
 		ac.errorresponse(w, http.StatusBadRequest)
 		return
 	}
@@ -48,11 +49,11 @@ func (ac appContext) objectmarshaltojsonresponse(w http.ResponseWriter, o interf
 }
 
 func (ac appContext) objectandfieldtotextresponse(w http.ResponseWriter, o interface{}, field string, e []error) {
-	if errorinslice(e) {
+	if helpers.Errorinslice(e) {
 		ac.errorresponse(w, http.StatusBadRequest)
 		return
 	}
-	m, merr := reflectStructByJSONName(o, field)
+	m, merr := helpers.ReflectStructByJSONName(o, field)
 	if merr != nil {
 		// like marshall, internal error. missing fields shouldnt get here
 		ac.errorresponse(w, http.StatusInternalServerError)
@@ -62,7 +63,7 @@ func (ac appContext) objectandfieldtotextresponse(w http.ResponseWriter, o inter
 }
 
 func (ac appContext) objecttextresponse(w http.ResponseWriter, o string, e []error) {
-	if errorinslice(e) {
+	if helpers.Errorinslice(e) {
 		ac.errorresponse(w, http.StatusBadRequest)
 		return
 	}
@@ -80,38 +81,10 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("This is the API URL. Please read the docs (if they exist)."))
 }
 
-func (ac appContext) switchkeytomuid(key string, value string) (string, error) {
-	var muid string
-	var muiderr error
-	_, keyerr := contains(validkeys, key)
-	// cover all cases. Either keyerr is not nil, or pass. Either key is some selected values or not
-	switch {
-		case keyerr != nil:
-			// key is not in validkeys list
-			// nothing for now
-			muiderr = keyerr
-			break
-		case key == "muid":
-			// muid is the value already
-			muid = value
-			muiderr = nil
-		case key == "macaddress":
-			// clean the mac from ipxe and use nodestore to get a muid for a this mac.
-			// error if more than one or didnt work
-			// keyvalue := ipxe.CleanHexHyp(value)
-			muid, muiderr = ac.nodestore.KVtoMUID(key, ipxe.CleanHexHyp(value))
-		default:
-			// value doesnt need to be cleaned, just look it up
-			// error if more than one or didnt work
-			muid, muiderr = ac.nodestore.KVtoMUID(key, value)
-	}
-	return muid, muiderr
-}
-
 func (ac appContext) mymuidbyip(rawip string) (string, error) {
 	ip, _, iperr := net.SplitHostPort(rawip)
 	if iperr != nil { return "", iperr }
-	return ac.switchkeytomuid("ipv4address", ip)
+	return ac.nodestore.KVtoMUID("ipv4address", ip)
 }
 
 // httpGetNodeByFieldHandler
@@ -130,8 +103,10 @@ func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Re
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
 	key := params.ByName("nodekey")
+	value := params.ByName("nodekeyvalue")
 	field := params.ByName("field")
-	muid, muiderr := ac.switchkeytomuid(key, params.ByName("nodekeyvalue"))
+	if key == "macaddress" { value = ipxe.CleanHexHyp(value) }
+	muid, muiderr := ac.nodestore.KVtoMUID(key, value)
 	if muiderr != nil {	ac.errorresponse(w, http.StatusBadRequest) }
 	o, oe := ac.nodestore.MUID(muid)
 	switch {
@@ -162,20 +137,9 @@ func (ac appContext) httpGetNodesByFieldHandler(w http.ResponseWriter, r *http.R
 	params := context.Get(r, "params").(httprouter.Params)
 	// validfields := []string{"uuid", "hostname", "ipv4address", "macaddress", "os_name", "os_step", "node_type", "oob_type"}
 	key := params.ByName("nodekey")
-
-	var muid []string
-	var muiderr error
-	switch key {
-		case "muid":
-			muid = append(muid, params.ByName("nodekeyvalue"))
-		case "macaddress":
-			keyvalue := ipxe.CleanHexHyp(params.ByName("nodekeyvalue"))
-			muid, muiderr = ac.nodestore.KVtoMUIDs(key, keyvalue)
-		default:
-			keyvalue := params.ByName("nodekeyvalue")
-			muid, muiderr = ac.nodestore.KVtoMUIDs(key, keyvalue)
-	}
-
+	value := params.ByName("nodekeyvalue")
+	if key == "macaddress" { value = ipxe.CleanHexHyp(value) }
+	muid, muiderr := ac.nodestore.KVtoMUIDs(key, value)
 	o, oe := ac.nodestore.MUIDs(muid)
 	ac.objectmarshaltojsonresponse(w, o, []error{oe, muiderr})
 }
@@ -221,7 +185,7 @@ func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, 
 	validfields := []string{"uuid", "hostname", "ipv4address", "macaddress", "muid"}
 	key := params.ByName("nodekey")
 	field := params.ByName("field")
-	_, keyerr := contains(validfields, key)
+	_, keyerr := helpers.Contains(validfields, key)
 	var muid string
 	switch key {
 		case "muid":
@@ -316,7 +280,9 @@ func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
 	params := context.Get(r, "params").(httprouter.Params)
 	// validfields := []string{"uuid", "hostname", "ipv4address", "macaddress", "muid"}
 	key := params.ByName("nodekey")
-	muid, muiderr := ac.switchkeytomuid(key, params.ByName("nodekeyvalue"))
+	value := params.ByName("nodekeyvalue")
+	if key == "macaddress" { value = ipxe.CleanHexHyp(value) }
+	muid, muiderr := ac.nodestore.KVtoMUID(key, value)
 	if muiderr != nil {
 		// problem with the request, reply with noop
 		s := ipxe.ResponseDecision(ac.ipxeconfig.Badkey, muiderr.Error())
