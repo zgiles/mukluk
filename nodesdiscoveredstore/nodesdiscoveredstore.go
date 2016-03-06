@@ -12,22 +12,10 @@ type StoreI interface {
 	MUIDs(muids []string) ([]mukluk.NodesDiscovered, error)
 	KVtoMUID(key string, value string) (string, error)
 	KVtoMUIDs(key string, value string) ([]string, error)
-  // SingleKV(field string, input string) (mukluk.NodesDiscovered, error)
-  // MultiKV(field string, input string) ([]mukluk.NodesDiscovered, error)
 	Insert(nd mukluk.NodesDiscovered) (mukluk.NodesDiscovered, error)
 	CreateAndInsert(uuid string, ipv4address string, macaddress string) (mukluk.NodesDiscovered, error)
 	UpdateCount(muid string) (int64, error)
 }
-
-/*
-type StoreDBI interface {
-  DbSingleKV(field string, input string) (mukluk.NodesDiscovered, error)
-  DbMultiKV(field string, input string) ([]mukluk.NodesDiscovered, error)
-	MUID(muid string) (mukluk.NodesDiscovered, error)
-	DbInsert(nd mukluk.NodesDiscovered) (mukluk.NodesDiscovered, error)
-	DbUpdateSingleKV(muid string, key string, value string) (error)
-}
-*/
 
 type StoreDBI interface {
 	MUID(muid string) (mukluk.NodesDiscovered, error)
@@ -53,18 +41,6 @@ func Create(uuid string, ipv4address string, macaddress string) (mukluk.NodesDis
 	}
 	return nd
 }
-
-/*
-func (local store) SingleKV(field string, input string) (mukluk.NodesDiscovered, error) {
-	muid, _ := local.db.KVtoMUID(field, input)
-	return local.db.MUID(muid)
-}
-
-func (local store) MultiKV(field string, input string) ([]mukluk.NodesDiscovered, error) {
-	muids, _ := local.db.KVtoMUIDs(field, input)
-	return local.db.MUIDs(muids)
-}
-*/
 
 func (local store) KVtoMUID(key string, value string) (string, error) {
 	_, keyerr := helpers.Contains(local.validsinglekeys, key)
@@ -134,12 +110,6 @@ func (local store) UpdateCount(muid string) (int64, error) {
 func heartbeatnow() (int64) {
 	return time.Now().Unix()
 }
-
-/*
-func (local store) HeartBeatNode(uuid string) (int, error) {
-	return local.db.DbHeartBeatNode(uuid)
-}
-*/
 
 func New(db1 StoreDBI) StoreI {
 	validsinglekeys := []string{"uuid", "ipv4address", "macaddress", "muid"}
