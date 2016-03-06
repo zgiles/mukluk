@@ -59,7 +59,6 @@ func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Re
 func (ac appContext) httpGetNodesByFieldHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
-	// validfields := []string{"uuid", "hostname", "ipv4address", "macaddress", "os_name", "os_step", "node_type", "oob_type"}
 	key := params.ByName("nodekey")
 	value := params.ByName("nodekeyvalue")
 	if key == "macaddress" { value = ipxe.CleanHexHyp(value) }
@@ -134,11 +133,9 @@ func (ac appContext) httpGetDiscoveredNodeByMyIP(w http.ResponseWriter, r *http.
 func (ac appContext) httpGetOsByNameAndStepHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
-	// validfields := []string{ "uuid", "hostname", "ipv4address", "macaddress" }
 	os_name := params.ByName("os_name")
 	os_step := params.ByName("os_step")
 	field := params.ByName("field")
-	// _, keyerr := contains(validfields, key)
 	o, oe := ac.osstore.SingleNameStep(os_name, os_step)
 	switchresponsefieldornot(w, o, "", field, []error{oe})
 }
@@ -150,7 +147,6 @@ func (ac appContext) httpipxechain(w http.ResponseWriter, r *http.Request) {
 
 func (ac appContext) httpipxeNode(w http.ResponseWriter, r *http.Request) {
 	params := context.Get(r, "params").(httprouter.Params)
-	// validfields := []string{"uuid", "hostname", "ipv4address", "macaddress", "muid"}
 	key := params.ByName("nodekey")
 	value := params.ByName("nodekeyvalue")
 	if key == "macaddress" { value = ipxe.CleanHexHyp(value) }

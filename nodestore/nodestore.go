@@ -25,11 +25,12 @@ type StoreDBI interface {
 
 type store struct {
   db StoreDBI
-	validkeys []string
+	validsinglekeys []string
+	validmultikeys []string
 }
 
 func (local store) KVtoMUID(key string, value string) (string, error) {
-	_, keyerr := helpers.Contains(local.validkeys, key)
+	_, keyerr := helpers.Contains(local.validsinglekeys, key)
 	switch {
 		case keyerr != nil:
 			return "", keyerr
@@ -41,7 +42,7 @@ func (local store) KVtoMUID(key string, value string) (string, error) {
 }
 
 func (local store) KVtoMUIDs(key string, value string) ([]string, error) {
-	_, keyerr := helpers.Contains(local.validkeys, key)
+	_, keyerr := helpers.Contains(local.validmultikeys, key)
 	switch {
 		case keyerr != nil:
 			return []string{}, keyerr
@@ -84,6 +85,7 @@ func heartbeatnow() (int64) {
 }
 
 func New(db1 StoreDBI) StoreI {
-	validkeys := []string{"uuid", "hostname", "ipv4address", "macaddress", "muid"}
-  return &store{db1, validkeys}
+	validsinglekeys := []string{"uuid", "hostname", "ipv4address", "macaddress", "muid"}
+	validmultikeys := []string{"uuid", "hostname", "ipv4address", "macaddress", "os_name", "os_step", "node_type", "oob_type"}
+  return &store{db: db1, validsinglekeys: validsinglekeys, validmultikeys: validmultikeys }
 }

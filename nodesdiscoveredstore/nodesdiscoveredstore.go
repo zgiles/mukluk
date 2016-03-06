@@ -40,7 +40,8 @@ type StoreDBI interface {
 
 type store struct {
   db StoreDBI
-	validkeys []string
+	validsinglekeys []string
+	validmultikeys []string
 }
 
 func Create(uuid string, ipv4address string, macaddress string) (mukluk.NodesDiscovered) {
@@ -66,7 +67,7 @@ func (local store) MultiKV(field string, input string) ([]mukluk.NodesDiscovered
 */
 
 func (local store) KVtoMUID(key string, value string) (string, error) {
-	_, keyerr := helpers.Contains(local.validkeys, key)
+	_, keyerr := helpers.Contains(local.validsinglekeys, key)
 	switch {
 		case keyerr != nil:
 			return "", keyerr
@@ -78,7 +79,7 @@ func (local store) KVtoMUID(key string, value string) (string, error) {
 }
 
 func (local store) KVtoMUIDs(key string, value string) ([]string, error) {
-	_, keyerr := helpers.Contains(local.validkeys, key)
+	_, keyerr := helpers.Contains(local.validmultikeys, key)
 	switch {
 		case keyerr != nil:
 			return []string{}, keyerr
@@ -141,6 +142,7 @@ func (local store) HeartBeatNode(uuid string) (int, error) {
 */
 
 func New(db1 StoreDBI) StoreI {
-	validkeys := []string{"uuid", "ipv4address", "macaddress", "muid", "enrolled", "surpressed"}
-  return &store{db1, validkeys}
+	validsinglekeys := []string{"uuid", "ipv4address", "macaddress", "muid"}
+	validmultikeys := []string{"uuid", "ipv4address", "macaddress", "muid", "enrolled", "surpressed"}
+  return &store{db: db1, validsinglekeys: validsinglekeys, validmultikeys: validmultikeys}
 }
