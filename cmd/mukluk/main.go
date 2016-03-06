@@ -123,23 +123,23 @@ func main() {
 	// routers
 	router := httprouter.New()
 	router.GET("/", wrapHandler(commonHandlers.ThenFunc(indexHandler)))
-	router.GET("/api/1/node/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByFieldHandler)))
-	router.GET("/api/1/node/:nodekey/:nodekeyvalue/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByFieldHandler)))
+	router.GET("/api/1/node/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.getnode)))
+	router.GET("/api/1/node/:nodekey/:nodekeyvalue/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.getnode)))
 	router.GET("/api/1/node/:nodekey/:nodekeyvalue/ipxe", wrapHandler(commonHandlers.ThenFunc(appC.httpipxeNode)))
 
-	router.GET("/api/1/nodes/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodesByFieldHandler)))
+	router.GET("/api/1/nodes/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.getnodes)))
 
 	router.GET("/api/1/discover/uuid/:uuid/ipv4address/:ipv4address/macaddress/:macaddress", wrapHandler(commonHandlers.ThenFunc(appC.httpipxediscover)))
 
-	router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByFieldHandler)))
-	router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByFieldHandler)))
+	router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.getnodediscovered)))
+	router.GET("/api/1/discoverednode/:nodekey/:nodekeyvalue/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.getnodediscovered)))
 
-	router.GET("/api/1/discoverednodes/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodesByFieldHandler)))
+	router.GET("/api/1/discoverednodes/:nodekey/:nodekeyvalue", wrapHandler(commonHandlers.ThenFunc(appC.getnodediscovereds)))
 
-	router.GET("/api/1/me/node", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByMyIP)))
-	router.GET("/api/1/me/node/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetNodeByMyIP)))
-	router.GET("/api/1/me/discoverednode", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByMyIP)))
-	router.GET("/api/1/me/discoverednode/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpGetDiscoveredNodeByMyIP)))
+	router.GET("/api/1/me/node", wrapHandler(commonHandlers.ThenFunc(appC.getnodebyip)))
+	router.GET("/api/1/me/node/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.getnodebyip)))
+	router.GET("/api/1/me/discoverednode", wrapHandler(commonHandlers.ThenFunc(appC.getnodediscoveredbyip)))
+	router.GET("/api/1/me/discoverednode/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.getnodediscoveredbyip)))
 	router.GET("/api/1/me/os", wrapHandler(commonHandlers.ThenFunc(appC.httpOsNodeByMyIP)))
 	router.GET("/api/1/me/os/field/:field", wrapHandler(commonHandlers.ThenFunc(appC.httpOsNodeByMyIP)))
 

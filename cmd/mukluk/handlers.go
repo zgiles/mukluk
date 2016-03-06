@@ -18,39 +18,55 @@ func (ac appContext) mymuidbyip(rawip string) (string, error) {
 	return ac.nodestore.KVtoMUID("ipv4address", ip)
 }
 
-func (ac appContext) httpGetNodeByFieldHandler(w http.ResponseWriter, r *http.Request) {
+func (ac appContext) internal_get_nodes(w http.ResponseWriter, key string, value string, field string, single bool) {
+	if key == "macaddress" { value = ipxe.CleanHexHyp(value) }
+	switch single {
+		case true:
+			muid, muiderr := ac.nodestore.KVtoMUID(key, value)
+			if muiderr != nil {
+				errorresponse(w, http.StatusBadRequest)
+				return
+			}
+			o, oe := ac.nodestore.MUID(muid)
+			switchresponsefieldornot(w, o, field, []error{oe, muiderr})
+		case false:
+			muid, muiderr := ac.nodestore.KVtoMUIDs(key, value)
+			if muiderr != nil {
+				errorresponse(w, http.StatusBadRequest)
+				return
+			}
+			o, oe := ac.nodestore.MUIDs(muid)
+			switchresponsefieldornot(w, o, field, []error{oe, muiderr})
+		}
+}
+
+func (ac appContext) getnode(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
 	key := params.ByName("nodekey")
 	value := params.ByName("nodekeyvalue")
 	field := params.ByName("field")
-	if key == "macaddress" { value = ipxe.CleanHexHyp(value) }
-	muid, muiderr := ac.nodestore.KVtoMUID(key, value)
-	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
-	o, oe := ac.nodestore.MUID(muid)
-	switchresponsefieldornot(w, o, field, []error{oe, muiderr})
+	ac.internal_get_nodes(w, key, value, field, true)
 }
 
-func (ac appContext) httpGetNodesByFieldHandler(w http.ResponseWriter, r *http.Request) {
+func (ac appContext) getnodes(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
 	key := params.ByName("nodekey")
 	value := params.ByName("nodekeyvalue")
-	if key == "macaddress" { value = ipxe.CleanHexHyp(value) }
-	muid, muiderr := ac.nodestore.KVtoMUIDs(key, value)
-	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
-	o, oe := ac.nodestore.MUIDs(muid)
-	switchresponsefieldornot(w, o, "", []error{oe, muiderr})
+	ac.internal_get_nodes(w, key, value, "", false)
 }
 
-func (ac appContext) httpGetNodeByMyIP(w http.ResponseWriter, r *http.Request) {
+func (ac appContext) getnodebyip(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
+	ip, _, iperr := net.SplitHostPort(r.RemoteAddr)
+	if iperr != nil {
+		errorresponse(w, http.StatusBadRequest)
+		return
+	}
 	field := params.ByName("field")
-	muid, muiderr := ac.mymuidbyip(r.RemoteAddr)
-	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
-	o, oe := ac.nodestore.MUID(muid)
-	switchresponsefieldornot(w, o, field, []error{oe, muiderr})
+	ac.internal_get_nodes(w, "ipv4address", ip, field, true)
 }
 
 func (ac appContext) httpOsNodeByMyIP(w http.ResponseWriter, r *http.Request) {
@@ -65,46 +81,58 @@ func (ac appContext) httpOsNodeByMyIP(w http.ResponseWriter, r *http.Request) {
 	switchresponsefieldornot(w, o, field, []error{oe, ne, muiderr})
 }
 
-func (ac appContext) httpGetDiscoveredNodeByFieldHandler(w http.ResponseWriter, r *http.Request) {
+func (ac appContext) internal_get_nodediscovered(w http.ResponseWriter, key string, value string, field string, single bool) {
+	if key == "macaddress" { value = ipxe.CleanHexHyp(value) }
+	switch single {
+		case true:
+			muid, muiderr := ac.nodesdiscoveredstore.KVtoMUID(key, value)
+			if muiderr != nil {
+				errorresponse(w, http.StatusBadRequest)
+				return
+			}
+			o, oe := ac.nodesdiscoveredstore.MUID(muid)
+			switchresponsefieldornot(w, o, field, []error{oe, muiderr})
+		case false:
+			muid, muiderr := ac.nodesdiscoveredstore.KVtoMUIDs(key, value)
+			if muiderr != nil {
+				errorresponse(w, http.StatusBadRequest)
+				return
+			}
+			o, oe := ac.nodesdiscoveredstore.MUIDs(muid)
+			switchresponsefieldornot(w, o, field, []error{oe, muiderr})
+		}
+}
+
+
+func (ac appContext) getnodediscovered(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
 	key := params.ByName("nodekey")
 	value := params.ByName("nodekeyvalue")
 	field := params.ByName("field")
-	if key == "macaddress" { value = ipxe.CleanHexHyp(value) }
-	muid, muiderr := ac.nodesdiscoveredstore.KVtoMUID(key, value)
-	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
-	o, oe := ac.nodesdiscoveredstore.MUID(muid)
-	switchresponsefieldornot(w, o, field, []error{oe, muiderr})
+	ac.internal_get_nodediscovered(w, key, value, field, true)
 }
 
-func (ac appContext) httpGetDiscoveredNodesByFieldHandler(w http.ResponseWriter, r *http.Request) {
+func (ac appContext) getnodediscovereds(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
 	key := params.ByName("nodekey")
 	value := params.ByName("nodekeyvalue")
-	if key == "macaddress" { value = ipxe.CleanHexHyp(value) }
-	muid, muiderr := ac.nodesdiscoveredstore.KVtoMUIDs(key, value)
-	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
-	o, oe := ac.nodesdiscoveredstore.MUIDs(muid)
-	switchresponsefieldornot(w, o, "", []error{oe, muiderr})
+	ac.internal_get_nodediscovered(w, key, value, "", false)
 }
 
-func (ac appContext) httpGetDiscoveredNodeByMyIP(w http.ResponseWriter, r *http.Request) {
+func (ac appContext) getnodediscoveredbyip(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
-	field := params.ByName("field")
-	ipv4address, _, iperr := net.SplitHostPort(r.RemoteAddr)
+	ip, _, iperr := net.SplitHostPort(r.RemoteAddr)
 	if iperr != nil {
 		errorresponse(w, http.StatusBadRequest)
+		return
 	}
-	muid, muiderr := ac.nodesdiscoveredstore.KVtoMUID("ipv4address", ipv4address)
-	if muiderr != nil {	errorresponse(w, http.StatusBadRequest) }
-	o, oe := ac.nodesdiscoveredstore.MUID(muid)
-	switchresponsefieldornot(w, o, field, []error{iperr, oe, muiderr})
+	field := params.ByName("field")
+	ac.internal_get_nodediscovered(w, "ipv4address", ip, field, true)
 }
 
-// httpGetOsByNameAndStepHandler
 func (ac appContext) httpGetOsByNameAndStepHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO verify inputs here
 	params := context.Get(r, "params").(httprouter.Params)
