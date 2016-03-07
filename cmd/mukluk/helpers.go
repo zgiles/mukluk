@@ -7,8 +7,6 @@ import (
 	"github.com/zgiles/mukluk/helpers"
 )
 
-var validkeys = []string{"uuid", "hostname", "ipv4address", "macaddress", "muid"}
-
 func jsonresponse(w http.ResponseWriter, js []byte, status int) {
 	w.Header().Set("Content-Type", "application/vnd.api+json")
 	w.WriteHeader(status)
