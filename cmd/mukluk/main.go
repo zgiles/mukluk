@@ -17,10 +17,11 @@ import (
 	"github.com/zgiles/mukluk/stores/nodesdiscoveredstore"
 
 	mysql_nodesdiscovereddb "github.com/zgiles/mukluk/db/mysql/nodesdiscovereddb"
-	//redis_nodesdiscovereddb "github.com/zgiles/mukluk/db/redis/nodesdiscovereddb"
+	redis_nodesdiscovereddb "github.com/zgiles/mukluk/db/redis/nodesdiscovereddb"
 	mysql_nodesdb "github.com/zgiles/mukluk/db/mysql/nodesdb"
-	//redis_nodesdb "github.com/zgiles/mukluk/db/redis/nodesdb"
+	redis_nodesdb "github.com/zgiles/mukluk/db/redis/nodesdb"
 	mysql_osdb "github.com/zgiles/mukluk/db/mysql/osdb"
+	redis_osdb "github.com/zgiles/mukluk/db/redis/osdb"
 )
 
 type appContext struct {
@@ -80,7 +81,7 @@ func main() {
 		l_osstoredb = mysql_osdb.New(mysqlpool)
 		log.Println("mysql: opening OsStore")
 		l_osstore = osstore.New(l_osstoredb)
-/*
+
 	case "redis":
 		if config.Redisconfig.Enabled == false {
 			log.Fatal("redis selected, but not enabled")
@@ -96,15 +97,20 @@ func main() {
 		log.Println("redis: open")
 
 		log.Println("redis: opening NodeStoreDB")
-		l_nodestoredb = nodesredis.New(redispool)
+		l_nodestoredb = redis_nodesdb.New(redispool)
 		log.Println("redis: opening NodeStore")
 		l_nodestore = nodestore.New(l_nodestoredb)
 
 		log.Println("redis: opening NodeDiscoveredStoreDB")
-		l_nodesdiscoveredstoredb = nodesdiscoveredredis.New(redispool)
+		l_nodesdiscoveredstoredb = redis_nodesdiscovereddb.New(redispool)
 		log.Println("redis: opening NodesDiscoveredStore")
 		l_nodesdiscoveredstore = nodesdiscoveredstore.New(l_nodesdiscoveredstoredb)
-*/
+
+		log.Println("redis: opening OsStoreDB")
+		l_osstoredb = redis_osdb.New(redispool)
+		log.Println("redis: opening OsStore")
+		l_osstore = osstore.New(l_osstoredb)
+
 	default:
 		log.Fatal("no valid db selected as primary")
 
