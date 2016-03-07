@@ -1,4 +1,4 @@
-package osesmysql
+package osdb
 
 import (
   _ "github.com/go-sql-driver/mysql"
@@ -6,15 +6,15 @@ import (
   "github.com/zgiles/mukluk"
 )
 
-type osesmysqldb struct {
+type osdb struct {
   mysqldb *sql.DB
 }
 
-func New(mysqldb *sql.DB) *osesmysqldb {
-	return &osesmysqldb{mysqldb}
+func New(mysqldb *sql.DB) *osdb {
+	return &osdb{mysqldb}
 }
 
-func (local osesmysqldb) DbSingleNameStep(os_name string, os_step string) (mukluk.Os, error) {
+func (local osdb) DbSingleNameStep(os_name string, os_step string) (mukluk.Os, error) {
 	answer, err := local.queryGetOsByNameAndStep(os_name, os_step)
 	if err != nil {
 		return mukluk.Os{}, err
@@ -25,7 +25,7 @@ func (local osesmysqldb) DbSingleNameStep(os_name string, os_step string) (muklu
 // DB QUERIES
 
 // queryGetOsByField
-func (local osesmysqldb) queryGetOsByNameAndStep(os_name string, os_step string) (mukluk.Os, error) { // input string, field string
+func (local osdb) queryGetOsByNameAndStep(os_name string, os_step string) (mukluk.Os, error) { // input string, field string
 	fn := func(os_name string, os_step string) (mukluk.Os, error) {
 		n := mukluk.Os{}
     // FIX HERE

@@ -1,4 +1,4 @@
-package nodesdiscoveredmysql
+package nodesdiscovereddb
 
 import (
 	"errors"
@@ -7,15 +7,15 @@ import (
   "github.com/zgiles/mukluk"
 )
 
-type nodesdiscoveredmysqldb struct {
+type nodesdiscovereddb struct {
   mysqldb *sql.DB
 }
 
-func New(mysqldb *sql.DB) *nodesdiscoveredmysqldb {
-	return &nodesdiscoveredmysqldb{mysqldb}
+func New(mysqldb *sql.DB) *nodesdiscovereddb {
+	return &nodesdiscovereddb{mysqldb}
 }
 
-func (local nodesdiscoveredmysqldb) KVtoMUID(key string, value string) (string, error) {
+func (local nodesdiscovereddb) KVtoMUID(key string, value string) (string, error) {
   a, ae := local.KVtoMUIDs(key, value)
   if ae != nil {
 		return "", ae
@@ -28,7 +28,7 @@ func (local nodesdiscoveredmysqldb) KVtoMUID(key string, value string) (string, 
 	}
 }
 
-func (local nodesdiscoveredmysqldb) KVtoMUIDs(key string, value string) ([]string, error) {
+func (local nodesdiscovereddb) KVtoMUIDs(key string, value string) ([]string, error) {
 	var z []string
 	rows, err := local.mysqldb.Query("select " + mukluk.MUIDmysqldefinition() + " from nodes_discovered where " + key + " = ?", value)
 	if err != nil {
@@ -49,7 +49,7 @@ func (local nodesdiscoveredmysqldb) KVtoMUIDs(key string, value string) ([]strin
 	return z, nil
 }
 
-func (local nodesdiscoveredmysqldb) MUID(muid string) (mukluk.NodesDiscovered, error) {
+func (local nodesdiscovereddb) MUID(muid string) (mukluk.NodesDiscovered, error) {
 	n := mukluk.NodesDiscovered{}
 	err := local.mysqldb.QueryRow("select uuid, ipv4address, macaddress, surpressed, enrolled, checkincount, heartbeat from nodes_discovered where " + mukluk.MUIDmysqldefinition() + " = ? limit 1", muid).Scan(&n.Uuid, &n.Ipv4address, &n.Macaddress, &n.Surpressed, &n.Enrolled, &n.Checkincount, &n.Heartbeat)
 	if err != nil {
@@ -58,7 +58,7 @@ func (local nodesdiscoveredmysqldb) MUID(muid string) (mukluk.NodesDiscovered, e
 	return n, nil
 }
 
-func (local nodesdiscoveredmysqldb) MUIDs(muids []string) ([]mukluk.NodesDiscovered, error) {
+func (local nodesdiscovereddb) MUIDs(muids []string) ([]mukluk.NodesDiscovered, error) {
 	nl := []mukluk.NodesDiscovered{}
 	for _, muid := range muids {
 		nd, nde := local.MUID(muid)
@@ -71,7 +71,7 @@ func (local nodesdiscoveredmysqldb) MUIDs(muids []string) ([]mukluk.NodesDiscove
 }
 
 
-func (local nodesdiscoveredmysqldb) Insert(nd mukluk.NodesDiscovered) (mukluk.NodesDiscovered, error) {
+func (local nodesdiscovereddb) Insert(nd mukluk.NodesDiscovered) (mukluk.NodesDiscovered, error) {
 	stmt, stmterr := local.mysqldb.Prepare("insert into `nodes_discovered` (`uuid`, `ipv4address`, `macaddress`, `heartbeat`) VALUES (?, ?, ?, ?)")
 	if stmterr != nil {
 		return nd, stmterr
@@ -83,7 +83,7 @@ func (local nodesdiscoveredmysqldb) Insert(nd mukluk.NodesDiscovered) (mukluk.No
 	return nd, nil
 }
 
-func (local nodesdiscoveredmysqldb) Update(muid string, key string, value string) (error) {
+func (local nodesdiscovereddb) Update(muid string, key string, value string) (error) {
 	stmt, stmterr := local.mysqldb.Prepare("UPDATE `nodes_discovered` SET `" + key + "` = ? WHERE " + mukluk.MUIDmysqldefinition() + " = ? LIMIT 1")
 	if stmterr != nil {
 		return stmterr

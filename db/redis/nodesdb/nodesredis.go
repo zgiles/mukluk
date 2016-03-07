@@ -1,4 +1,4 @@
-package nodesredis
+package nodesdb
 
 import (
 	"log"
@@ -6,15 +6,15 @@ import (
 	"github.com/zgiles/mukluk"
 )
 
-type nodesredisdb struct {
+type nodesdb struct {
   redispool *redis.Pool
 }
 
-func New(redispool *redis.Pool) *nodesredisdb {
-	return &nodesredisdb{redispool}
+func New(redispool *redis.Pool) *nodesdb {
+	return &nodesdb{redispool}
 }
 
-func (nrdb nodesredisdb) DbSingleKV(field string, input string) (mukluk.Node, error) {
+func (nrdb nodesdb) DbSingleKV(field string, input string) (mukluk.Node, error) {
 	answer, err := nrdb.redisgetNodesByField(field, input)
 	if err != nil {
 		return mukluk.Node{}, err
@@ -22,20 +22,20 @@ func (nrdb nodesredisdb) DbSingleKV(field string, input string) (mukluk.Node, er
 	return answer[0], nil
 }
 
-func (nrdb nodesredisdb) DbMultiKV(field string, input string) ([]mukluk.Node, error) {
+func (nrdb nodesdb) DbMultiKV(field string, input string) ([]mukluk.Node, error) {
 	return nrdb.redisgetNodesByField(field, input)
 }
 
-func (local nodesredisdb) MUID(muid string) (mukluk.Node, error) {
+func (local nodesdb) MUID(muid string) (mukluk.Node, error) {
 	n := mukluk.Node{}
 	return n, nil
 }
 
-func (nrdb nodesredisdb) DbUpdateSingleKV(uuid string, key string, value string) (error) {
+func (nrdb nodesdb) DbUpdateSingleKV(uuid string, key string, value string) (error) {
 	return nil
 }
 
-func (nrdb nodesredisdb) redisgetNodesByField(field string, input string) ([]mukluk.Node, error) {
+func (nrdb nodesdb) redisgetNodesByField(field string, input string) ([]mukluk.Node, error) {
 		n := []mukluk.Node{}
 		conn := nrdb.redispool.Get()
 		defer conn.Close()

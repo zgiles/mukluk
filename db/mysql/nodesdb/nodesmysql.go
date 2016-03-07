@@ -1,4 +1,4 @@
-package nodesmysql
+package nodesdb
 
 import (
   "errors"
@@ -7,16 +7,16 @@ import (
   "github.com/zgiles/mukluk"
 )
 
-type nodesmysqldb struct {
+type nodesdb struct {
   mysqldb *sql.DB
 }
 
-func New(mysqldb *sql.DB) *nodesmysqldb {
-	return &nodesmysqldb{mysqldb}
+func New(mysqldb *sql.DB) *nodesdb {
+	return &nodesdb{mysqldb}
 }
 
 
-func (local nodesmysqldb) KVtoMUID(key string, value string) (string, error) {
+func (local nodesdb) KVtoMUID(key string, value string) (string, error) {
   a, ae := local.KVtoMUIDs(key, value)
   if ae != nil {
 		return "", ae
@@ -29,7 +29,7 @@ func (local nodesmysqldb) KVtoMUID(key string, value string) (string, error) {
 	}
 }
 
-func (local nodesmysqldb) KVtoMUIDs(key string, value string) ([]string, error) {
+func (local nodesdb) KVtoMUIDs(key string, value string) ([]string, error) {
 	var z []string
 	rows, err := local.mysqldb.Query("select " + mukluk.MUIDmysqldefinition() + " from nodes where " + key + " = ?", value)
 	if err != nil {
@@ -50,7 +50,7 @@ func (local nodesmysqldb) KVtoMUIDs(key string, value string) ([]string, error) 
 	return z, nil
 }
 
-func (local nodesmysqldb) MUID(muid string) (mukluk.Node, error) {
+func (local nodesdb) MUID(muid string) (mukluk.Node, error) {
 	n := mukluk.Node{}
   err := local.mysqldb.QueryRow("select uuid, hostname, ipv4address, macaddress, os_name, os_step, node_type, oob_type, heartbeat from nodes where " + mukluk.MUIDmysqldefinition() + " = ? limit 1", muid).Scan(&n.Uuid, &n.Hostname, &n.Ipv4address, &n.Macaddress, &n.Os_name, &n.Os_step, &n.Node_type, &n.Oob_type, &n.Heartbeat)
 	if err != nil {
@@ -59,7 +59,7 @@ func (local nodesmysqldb) MUID(muid string) (mukluk.Node, error) {
 	return n, nil
 }
 
-func (local nodesmysqldb) MUIDs(muids []string) ([]mukluk.Node, error) {
+func (local nodesdb) MUIDs(muids []string) ([]mukluk.Node, error) {
 	nl := []mukluk.Node{}
 	for _, muid := range muids {
 		nd, nde := local.MUID(muid)
@@ -71,7 +71,7 @@ func (local nodesmysqldb) MUIDs(muids []string) ([]mukluk.Node, error) {
 	return nl, nil
 }
 
-func (local nodesmysqldb) Update(muid string, key string, value string) (error) {
+func (local nodesdb) Update(muid string, key string, value string) (error) {
 	stmt, stmterr := local.mysqldb.Prepare("UPDATE `nodes` SET `" + key + "` = ? WHERE " + mukluk.MUIDmysqldefinition() + " = ? LIMIT 1")
 	if stmterr != nil {
 		return stmterr

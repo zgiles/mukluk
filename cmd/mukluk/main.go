@@ -12,15 +12,15 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/justinas/alice"
 
-	"github.com/zgiles/mukluk/nodestore"
-	"github.com/zgiles/mukluk/osstore"
-	"github.com/zgiles/mukluk/nodesdiscoveredstore"
+	"github.com/zgiles/mukluk/stores/nodestore"
+	"github.com/zgiles/mukluk/stores/osstore"
+	"github.com/zgiles/mukluk/stores/nodesdiscoveredstore"
 
-	"github.com/zgiles/mukluk/stores/nodesdiscoveredmysql"
-	// "github.com/zgiles/mukluk/stores/nodesdiscoveredredis"
-	"github.com/zgiles/mukluk/stores/nodesmysql"
-	// "github.com/zgiles/mukluk/stores/nodesredis"
-	"github.com/zgiles/mukluk/stores/osesmysql"
+	mysql_nodesdiscovereddb "github.com/zgiles/mukluk/db/mysql/nodesdiscovereddb"
+	//redis_nodesdiscovereddb "github.com/zgiles/mukluk/db/redis/nodesdiscovereddb"
+	mysql_nodesdb "github.com/zgiles/mukluk/db/mysql/nodesdb"
+	//redis_nodesdb "github.com/zgiles/mukluk/db/redis/nodesdb"
+	mysql_osdb "github.com/zgiles/mukluk/db/mysql/osdb"
 )
 
 type appContext struct {
@@ -67,17 +67,17 @@ func main() {
 		log.Println("mysql: open")
 
 		log.Println("mysql: opening NodeStoreDB")
-		l_nodestoredb = nodesmysql.New(mysqlpool)
+		l_nodestoredb = mysql_nodesdb.New(mysqlpool)
 		log.Println("mysql: opening NodeStore")
 		l_nodestore = nodestore.New(l_nodestoredb)
 
 		log.Println("mysql: opening NodesDiscoveredStoreDB")
-		l_nodesdiscoveredstoredb = nodesdiscoveredmysql.New(mysqlpool)
+		l_nodesdiscoveredstoredb = mysql_nodesdiscovereddb.New(mysqlpool)
 		log.Println("mysql: opening NodesDiscoveredStore")
 		l_nodesdiscoveredstore = nodesdiscoveredstore.New(l_nodesdiscoveredstoredb)
 
 		log.Println("mysql: opening OsStoreDB")
-		l_osstoredb = osesmysql.New(mysqlpool)
+		l_osstoredb = mysql_osdb.New(mysqlpool)
 		log.Println("mysql: opening OsStore")
 		l_osstore = osstore.New(l_osstoredb)
 /*
